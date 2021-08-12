@@ -1,0 +1,5 @@
+X shape : (22625, 32, 36)
+y shape : (5751, 1)
+every X's mean : 251.01116943359375
+every X's standard deviation : 126.12203979492188
+The dataset has not been preprocessed, is not normalised etc

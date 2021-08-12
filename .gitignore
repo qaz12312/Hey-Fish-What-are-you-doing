@@ -1,3 +1,6 @@
+lstm_debug/
+RNN-HAR-2D-Pose-database/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
