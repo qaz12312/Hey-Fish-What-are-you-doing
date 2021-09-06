@@ -1,4 +1,4 @@
-# 使用/usr/bin/python3.6 training.py去跑
+
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
