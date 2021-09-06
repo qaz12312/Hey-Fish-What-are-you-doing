@@ -1,4 +1,5 @@
-lstm_debug/
+log/
+debug/
 RNN-HAR-2D-Pose-database/
 
 # Byte-compiled / optimized / DLL files
