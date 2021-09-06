@@ -20,7 +20,7 @@
     + lstm 測試用資料
 + debug
     + 測試執行結果
-+ logs
++ log
     + 依執行時間落log
 
 ## message
