@@ -22,6 +22,8 @@
     + 測試執行結果
 + log
     + 依執行時間落log
++ RNN-HAR-2D-Pose-database
+    + 原始訓練、測試資料
 
 ## message
 + 09/06 (一)
