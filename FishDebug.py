@@ -14,14 +14,29 @@ if not os.path.isdir(dir_path):
 # Write a log
 # -----------------------------------------------------------
 def writeLog(programInfo, action, message):
-    with open(dir_path + action, 'w') as f:
+    with open(dir_path + action + '.log', 'w') as f:
         f.write("Called from line {}".format(programInfo["lineNum"]))
         if programInfo["funName"] != False:
             f.write(", in {}()".format(programInfo["funName"]))
         f.write(", {}.\n\n-------------------------------------------------------\n\n".format(programInfo["fileName"]))
         # write log
-        for key,val in message.items():
-            f.write("{} : {}\n".format(key,val))
+        if type(message).__name__ == 'list' or type(message).__name__ == 'ndarray':
+            idx = 0
+            for value in message:
+                if type(value).__name__ == 'list' or type(value).__name__ == 'ndarray':
+                    f.write("[{}] = \n".format(idx))
+                    i = 0
+                    for val in value:
+                        f.write("\t[{}] = {}\n".format(i,val))
+                        i += 1
+                else:
+                    f.write("[{}] = {}\n".format(idx, value))
+                idx += 1
+        elif type(message).__name__ == 'dict':
+            for key,val in message.items():
+                f.write("{} : {}\n".format(key,val))
+        else:
+            f.write("{}\n".format(message))
         
         f.write("\n-------------------------------------------------------\n\nFinish write in {}.".format(strftime("%Y-%m-%d %H:%M:%S")))
 

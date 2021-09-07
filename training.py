@@ -101,19 +101,14 @@ training_iters = training_data_count *100  # Loop 100 times on the dataset, ie 1
 batch_size = 4096
 display_iter = batch_size*8  # To show test set accuracy during training
 
-start_time = strftime("%m-%d_%H-%M")
-try:
-    os.makedirs('lstm_log/' + start_time)
-except FileExistsError:
-    # directory already exists
-    pass
-
-with open('lstm_log/' + start_time + '/SetParameters', 'w') as f:
-    f.write("X shape : {}\n".format(X_train.shape))
-    f.write("y shape : {}\n".format( y_test.shape))
-    f.write("every X's mean : {}\n".format(np.mean(X_test)))
-    f.write("every X's standard deviation : {}\n".format( np.std(X_test)))
-    f.write("The dataset has not been preprocessed, is not normalised etc")
+print_msg = {
+    "X shape" : X_train.shape,
+    "y shape" : y_test.shape,
+    "every X's mean" : np.mean(X_test),
+    "every X's standard deviation" : np.std(X_test),
+    "The dataset has not been preprocessed, is not normalised etc." : ""
+}
+FishDebug.writeLog({"lineNum":104, "funName":False, "fileName":"./training.py"},'SetParameters',print_msg)
 '''
 (X shape, y shape, every X's mean, every X's standard deviation)
 ((22625, 32, 36), (5751, 1), 251.01117, 126.12204)
@@ -269,7 +264,7 @@ while step * batch_size <= training_iters:
     if (step*batch_size % display_iter == 0) or (step == 1) or (step * batch_size > training_iters):
         
         # To not spam console, show training accuracy/loss in this "if"
-        with open('lstm_log/' + start_time + '/TrainTheNetwork', 'a') as f:
+        with open('lstm_log/TrainTheNetwork', 'a') as f:
             f.write("Iter #" + str(step*batch_size) + \
               ":  Learning rate = " + "{:.6f}".format(sess.run(learning_rate)) + \
               ":   Batch Loss = " + "{:.6f}".format(loss) + \
@@ -289,16 +284,26 @@ while step * batch_size <= training_iters:
         )
         test_losses.append(loss)
         test_accuracies.append(acc)
-        with open('lstm_log/' + start_time + '/TrainTheNetwork', 'a') as f:
+        with open('lstm_log/TrainTheNetwork', 'a') as f:
             f.write("\nPERFORMANCE ON TEST SET:             " + \
               "Batch Loss = {}".format(loss) + \
               ", Accuracy = {}\n".format(acc))
         # print("PERFORMANCE ON TEST SET:             " + \
         #       "Batch Loss = {}".format(loss) + \
         #       ", Accuracy = {}".format(acc))
+        # print_msg = {
+        #     "Iter #"        : step * batch_size,
+        #     "Learning rate" : sess.run(learning_rate),
+        #     "Batch Loss"    : loss, 
+        #     "Accuracy"      : acc,    
+        #     "PERFORMANCE ON TEST SET": "",            
+        #     "Batch Loss"    : loss, 
+        #     "Accuracy"      : acc
+        # }
+        # FishDebug.writeLog({"lineNum":267, "funName":False, "fileName":"./training.py"},'TrainTheNetwork',print_msg)
 
     step += 1
-with open('lstm_log/' + start_time + '/TrainTheNetwork', 'a') as f:
+with open('lstm_log/TrainTheNetwork', 'a') as f:
     f.write("\nOptimization Finished!\n")
 
 # Accuracy for test data
@@ -313,7 +318,7 @@ one_hot_predictions, accuracy, final_loss = sess.run(
 
 test_losses.append(final_loss)
 test_accuracies.append(accuracy)
-with open('lstm_log/' + start_time + '/TrainTheNetwork', 'a') as f:
+with open('lstm_log/TrainTheNetwork', 'a') as f:
     f.write("\nFINAL RESULT: " + \
       "Batch Loss = {}".format(final_loss) + \
       ", Accuracy = {}\n".format(accuracy))
@@ -321,7 +326,7 @@ with open('lstm_log/' + start_time + '/TrainTheNetwork', 'a') as f:
 #       "Batch Loss = {}".format(final_loss) + \
 #       ", Accuracy = {}".format(accuracy))
 time_stop = time.time()
-with open('lstm_log/' + start_time + '/TrainTheNetwork', 'a') as f:
+with open('lstm_log/TrainTheNetwork', 'a') as f:
     f.write("\nTOTAL TIME:  {}\n".format(time_stop - time_start))
 
 # print("TOTAL TIME:  {}".format(time_stop - time_start))
@@ -353,7 +358,7 @@ indep_test_axis = np.append(
 #plt.plot(indep_test_axis, np.array(test_losses), "b-", linewidth=2.0, label="Test losses")
 plt.plot(indep_test_axis, np.array(test_accuracies), "b-", linewidth=2.0, label="Test accuracies")
 
-with open('lstm_log/' + start_time + '/Results', 'w') as f:
+with open('lstm_log/Results', 'w') as f:
     f.write("test_accuracies len: {}".format(len(test_accuracies)))
     f.write("train_accuracies len: {}\n\n".format(len(train_accuracies)))
 # print("\n\ntest_accuracies len: {}".format(len(test_accuracies)))
@@ -370,7 +375,7 @@ plt.show()
 
 predictions = one_hot_predictions.argmax(1)
 
-with open('lstm_log/' + start_time + '/Results', 'a') as f:
+with open('lstm_log/Results', 'a') as f:
     f.write("Testing Accuracy: {}%".format(100*accuracy))
     f.write("\n\nPrecision: {}%".format(100*metrics.precision_score(y_test, predictions, average="weighted")))
     f.write("\nRecall: {}%".format(100*metrics.recall_score(y_test, predictions, average="weighted")))
