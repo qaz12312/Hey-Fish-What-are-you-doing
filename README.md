@@ -19,10 +19,23 @@
 
 ## Folder
 + `testCSV` : Deeplabcut 取得的資料
+    + `DLC0818.csv` : /media/ntou501/4f2b9da8-a755-49a3-afea-60704f1a7d00/merge/mergeFish0816-cse509-2021-08-16/test/test2DLC_resnet50_mergeFish0816Aug16shuffle1_50000.csv
+        + 08/18 第一次訓練模型
+    + `DLC0830.csv` : /media/ntou501/4f2b9da8-a755-49a3-afea-60704f1a7d00/merge/mergeFish0816-cse509-2021-08-16/test/test1DLC_resnet50_mergeFish0816Aug16shuffle1_50000.csv
+        + 08/30 第二次訓練模型
+    + `GH010241.csv` : /media/ntou501/4f2b9da8-a755-49a3-afea-60704f1a7d00/merge/mergeFish0816-cse509-2021-08-16/test/GH010241croppedDLC_resnet50_mergeFish0816Aug16shuffle1_50000.csv
+        + 08/30 第二次訓練模型
 + `convertTo_txt` : LSTM 測試用資料
 + `log` : 依執行時間落log
 + `debug` : 測試執行結果
 + `RNN-HAR-2D-Pose-database` : 原始訓練、測試資料
+    + only in ntou501
+    + `X_test.txt`  : 測試資料, 座標點 (`n` keypoints per line, `n_steps` lines per datapoint)
+    + `X_train.txt` : 訓練資料, 座標點
+    + `X_val.txt`   : Placeholder for a single inference after training
+    + `X_val2.txt`  :
+    + `Y_test.txt`  : 測試資料, 分類labels
+    + `Y_train.txt` : 訓練資料, 分類labels
 
 
 ## message
