@@ -17,7 +17,7 @@
     + 執行測試 function `python .\FishDebug.py --test`
 
 
-## Folder
+## Directory
 + `testCSV` : Deeplabcut 取得的資料
     + `DLC0818.csv` : /media/ntou501/4f2b9da8-a755-49a3-afea-60704f1a7d00/merge/mergeFish0816-cse509-2021-08-16/test/test2DLC_resnet50_mergeFish0816Aug16shuffle1_50000.csv
         + 08/18 第一次訓練模型
