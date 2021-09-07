@@ -8,7 +8,7 @@ import random
 from random import randint
 import time
 import os
-from time import strftime # for log
+import FishDebug
 # print(tf.version.VERSION)
 
 # Preparing dataset-------------------------------------------------
@@ -36,12 +36,6 @@ y_train_path = DATASET_PATH + "Y_train.txt"
 y_test_path = DATASET_PATH + "Y_test.txt"
 
 n_steps = 32 # 32 timesteps per series
-
-# debug by Polly in 2021/6/10 
-def debugLog(where,prints):
-    with open('lstm_debug/' + where + strftime("%m-%d_%H"), 'w') as f:
-        for key,val in prints.items():
-            f.write("{} : {}\n".format(key,val))
 
 # Load the networks inputs
 def load_X(X_path):
@@ -177,7 +171,7 @@ def extract_batch_size(_train, _labels, _unsampled, batch_size):
         '\nbatch_s[0]':_train[index],
         '\nbatch_labels[0]':_labels[index]
     }
-    debugLog('extract_batch_size154__',prints)
+    FishDebug.writeLog({"lineNum":174, "funName":"extract_batch_size", "fileName":"C:\Users\88692\Desktop\Hey-Fish-What-are-you-doing\training.py"},'extract_batch_size154__',prints)
 
     _unsampled = list(_unsampled) # ['range' object has no attribute 'remove'] add by Polly in 2021/6/10
     for i in range(batch_size):
