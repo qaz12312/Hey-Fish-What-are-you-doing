@@ -104,6 +104,7 @@ def formatException(e_msg, programInfo, action, message = None):
         log_info['message']['message'] += message
     return log_info
 
+
 # -----------------------------------------------------------
 # Get FishLog.py info
 # -----------------------------------------------------------
@@ -119,13 +120,13 @@ def help():
     formatLog() args:
         level         : int,    Log Level
         programPath   : string, The absolute path of the file
-        programName   : string, The line where the function is called and function Name
+        programName   : string, The line where the function is called and function Name ("line {lineNum}, in {funName}")
         action        : string, Action performed
         message = None: string, More message
     
     formatException() args:
-        e_msg         : message of Exception
-        programInfo   : dict
+        e_msg         : string, message of Exception (e.args[0])
+        programInfo   : dict,   traceback info (traceback.extract_tb(tb)[-1] (cl, exc, tb = sys.exc_info()))
         action        : string, Action performed
         message = None: string, More message
     
@@ -135,12 +136,14 @@ def help():
     print(msg)
 
 
-if __name__ == '__main__':
-    print("test help().")
-    help()
+# -----------------------------------------------------------
+# Test for each function
+# -----------------------------------------------------------
+def testFunc():
     print("test formatLog().")
-    log_info = formatLog(10, "Hey-Fish-What-are-you-doing\FishLog.py", "line 142", "Test formatLog()")
+    log_info = formatLog(10, "Hey-Fish-What-are-you-doing\FishLog.py", "line 142, in testFunc", "Test formatLog()")
     writeLog(log_info)
+    print("finish writeLog().")
 
     print("test formatException().")
     try:
@@ -151,4 +154,28 @@ if __name__ == '__main__':
         log_info = formatException(e.args[0], lastCallStack, "Test formatException()")
         writeLog(log_info)
     finally:
-        print("finish.")
+        print("finish writeLog().")
+
+
+if __name__ == '__main__':
+    if len(sys.argv) == 2 :
+        option = sys.argv[1]
+        if option == '-h' or option == '--help': # see help message
+            help()
+            sys.exit(0)
+        elif option == '--test':
+            testFunc()
+            sys.exit(0)
+    
+    print_help = """
+    Description:
+    List commands
+
+    Usage:
+    FishLog.py [options]
+
+    Options:
+    -h, --help  Display function args info
+        --test  Run test for each function
+    """
+    print(print_help)

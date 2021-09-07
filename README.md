@@ -5,17 +5,20 @@
 
 ## code
 + convertData.py
-    + 從 dlc 取得的資料轉成 lstm 所要用的格式
+    + 從 Deeplabcut 取得的資料轉成 lstm 所要用的格式
 + training.py
     + 訓練 lstm 資料
 + rebot.py
     + 可用來進行行為分析
 + FishLog.py
     + log 格式
+    + 查看指令格式 `python .\FishLog.py`
+    + 查看 function arg `python .\FishLog.py --help`
+    + 執行測試 function `python .\FishLog.py --test`
 
 ## Folder
 + testCSV
-    + dlc 取得的資料
+    + Deeplabcut 取得的資料
 + convertTo_txt
     + lstm 測試用資料
 + debug
@@ -28,4 +31,6 @@
 ## message
 + 09/06 (一)
     + feat: log 格式
++ 09/07 (二)
+    + update: add commands for FishLog.py
     <!-- + feat: 資料正規劃 -->
