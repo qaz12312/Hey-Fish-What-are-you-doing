@@ -88,7 +88,7 @@ def formatException(e_msg, programInfo, action, message = None):
     if programInfo[2]=='<module>':
         programName = "line {}".format(programInfo[1])
     else :
-        programName = "line {}, in {}".format(programInfo[1],programInfo[2])
+        programName = "line {}, in {}()".format(programInfo[1],programInfo[2])
     
     log_info = {
         'logLevel': logging.CRITICAL,
