@@ -3,7 +3,7 @@
 
 ## 使用 /usr/bin/python3.6 training.py 去跑
 
-## code
+## Code
 + `convertData.py` : 從 Deeplabcut 取得的資料轉成 LSTM 所要用的格式
 + `training.py` : 訓練 LSTM 資料
 + `rebot.py` : 可用來進行行為分析
@@ -44,4 +44,20 @@
 + 09/07 (二)
     + update: add commands for FishLog.py
     + feat: debug log 格式
+    + new: .env file and requirements.txt
     <!-- + feat: 資料正規劃 -->
+
+## usaage
++ test `.env`
+    ```python
+    from os import getenv
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    PROJECT_PATH = getenv('PROJECT_PATH')
+    print("{}--{}--{}--{}".format(PROJECT_PATH,TOTAL_POINTS,TRANSLATION_POINT,MIRROR_POINT))
+    ```
+
++ `requirements.txt`
+    + 存入 `pip freeze > requirements.txt`
+    + 安裝 `pip install -r requirements.txt`

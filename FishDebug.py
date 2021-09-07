@@ -1,14 +1,17 @@
 # log format for debug
-import os
+from os import getenv, makedirs
+from os.path import isdir
 import sys
 from time import strftime
+from dotenv import load_dotenv
 
+load_dotenv()
 # 設定目錄
-dir_path = os.path.dirname(os.path.abspath(__file__)) + '/debug/'
+dir_path = getenv('PROJECT_PATH') + '/debug/'
 
 # 若不存在則新建
-if not os.path.isdir(dir_path):
-    os.makedirs(dir_path)
+if not isdir(dir_path):
+    makedirs(dir_path)
 
 # -----------------------------------------------------------
 # Write a log

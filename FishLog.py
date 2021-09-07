@@ -1,19 +1,22 @@
 # log format
 import logging
-import os
+from os import getenv, makedirs
+from os.path import isdir, isfile
 import sys
-import traceback
+from traceback import extract_tb
 import datetime
-import json
+from json import dumps
+from dotenv import load_dotenv
 
+load_dotenv()
 # 設定目錄、檔名
-dir_path = os.path.dirname(os.path.abspath(__file__)) + '/log/'
+dir_path = getenv('PROJECT_PATH') + '/log/'
 file_path = dir_path + "{:%Y-%m-%d}".format(datetime.datetime.now()) + '.log'
 
 # 若不存在則新建
-if not os.path.isdir(dir_path):
-    os.makedirs(dir_path)
-if not os.path.isfile(file_path):
+if not isdir(dir_path):
+    makedirs(dir_path)
+if not isfile(file_path):
     with open(file_path, 'w'): pass
 
 
@@ -30,7 +33,7 @@ logging.basicConfig(
 # -----------------------------------------------------------
 def writeLog(info):
     level = info['logLevel']
-    log = json.dumps(info['message'])
+    log = dumps(info['message'])
     # write log
     if level == logging.CRITICAL:
         logging.critical(log)
@@ -69,7 +72,7 @@ def formatLog(level, programPath, programName, action, message = None):
     log_info = {
         'logLevel': level,
         'message' : {
-            'state' : "Success",
+            'state'      : "Success",
             'action'     : action,
             'message'    :'',
             'programPath': programPath,
@@ -93,7 +96,7 @@ def formatException(e_msg, programInfo, action, message = None):
     log_info = {
         'logLevel': logging.CRITICAL,
         'message' : {
-            'state' : "Failure",
+            'state'      : "Failure",
             'action'     : action,
             'message'    : e_msg,
             'programPath': programInfo[0],
@@ -141,7 +144,7 @@ def help():
 # -----------------------------------------------------------
 def testFunc():
     print("test formatLog().")
-    log_info = formatLog(10, "Hey-Fish-What-are-you-doing\FishLog.py", "line 142, in testFunc", "Test formatLog()")
+    log_info = formatLog(10, "Hey-Fish-What-are-you-doing\FishLog.py", "line 142, in testFunc()", "Test formatLog()")
     writeLog(log_info)
     print("finish writeLog().")
 
@@ -150,7 +153,7 @@ def testFunc():
         raise ValueError('Test.')
     except Exception as e:
         cl, exc, tb = sys.exc_info() #取得Call Stack
-        lastCallStack = traceback.extract_tb(tb)[-1] #取得Call Stack的最後一筆資料
+        lastCallStack = extract_tb(tb)[-1] #取得Call Stack的最後一筆資料
         log_info = formatException(e.args[0], lastCallStack, "Test formatException()")
         writeLog(log_info)
     finally:
