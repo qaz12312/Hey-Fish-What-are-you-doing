@@ -57,9 +57,9 @@
 + 09/06 (一)
     + feat: 新增 log 格式
 + 09/07 (二)
-    + update: 新增指令 for FishLog.py
     + feat: 新增 debug log 格式
+    + update: 新增指令 for FishLog.py
     + new: 新增 .env 檔和 requirements.txt
 + 09/08 (三)
+    + feat: 將 Deeplabcut 的 log 檔中的資料轉成 LSTM 所需格式
     + new: 新增 .env.example
-    <!-- + feat: 資料正規劃 -->
