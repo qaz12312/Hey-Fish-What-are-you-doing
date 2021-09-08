@@ -38,15 +38,6 @@
     + `Y_train.txt` : 訓練資料, 分類labels
 
 
-## message
-+ 09/06 (一)
-    + feat: log 格式
-+ 09/07 (二)
-    + update: add commands for FishLog.py
-    + feat: debug log 格式
-    + new: .env file and requirements.txt
-    <!-- + feat: 資料正規劃 -->
-
 ## usaage
 + test `.env`
     ```python
@@ -61,3 +52,14 @@
 + `requirements.txt`
     + 存入 `pip freeze > requirements.txt`
     + 安裝 `pip install -r requirements.txt`
+
+## Message
++ 09/06 (一)
+    + feat: 新增 log 格式
++ 09/07 (二)
+    + update: 新增指令 for FishLog.py
+    + feat: 新增 debug log 格式
+    + new: 新增 .env 檔和 requirements.txt
++ 09/08 (三)
+    + new: 新增 .env.example
+    <!-- + feat: 資料正規劃 -->
