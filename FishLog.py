@@ -1,4 +1,6 @@
-# log format
+"""
+Log format.
+"""
 import logging
 from os import getenv, makedirs
 from os.path import isdir, isfile
@@ -32,6 +34,14 @@ logging.basicConfig(
 # Write a log
 # -----------------------------------------------------------
 def writeLog(info):
+    """
+    Write a log.
+
+    Parameters
+    ----------
+    info : `dict[str, Any]`
+        The return value of `formatLog()` or `formatException()`
+    """
     level = info['logLevel']
     log = dumps(info['message'])
     # write log
@@ -69,6 +79,26 @@ def writeLog(info):
 # Format a log
 # -----------------------------------------------------------
 def formatLog(level, programPath, programName, action, message = None):
+    """
+    Format a log.
+
+    Parameters
+    ----------
+    level : `int`
+        Log Level.
+    programPath : `str`
+        The absolute path of the file.
+    programName : `str`
+        The line where the function is called and function Name (`"line {lineNum}, in {funName}()"`).
+    action : `str`
+        Action performed
+    message : `str`, optional
+        More message.
+
+    Returns
+    -------
+    `dict[str, Any]`
+    """
     log_info = {
         'logLevel': level,
         'message' : {
@@ -88,6 +118,24 @@ def formatLog(level, programPath, programName, action, message = None):
 # Format an exception
 # -----------------------------------------------------------
 def formatException(e_msg, programInfo, action, message = None):
+    """
+    Format an exception.
+
+    Parameters
+    ----------
+    e_msg : `int`
+        Message of Exception (`e.args[0]`).
+    programInfo : `str`
+        Traceback info (`traceback.extract_tb(tb)[-1]` (`cl, exc, tb = sys.exc_info())`).
+    action : `str`
+        Action performed
+    message : `str`, optional
+        More message.
+
+    Returns
+    -------
+    `dict[str, Any]`
+    """
     if programInfo[2]=='<module>':
         programName = "line {}".format(programInfo[1])
     else :
@@ -112,6 +160,9 @@ def formatException(e_msg, programInfo, action, message = None):
 # Get FishLog.py info
 # -----------------------------------------------------------
 def help():
+    """
+    Get FishLog.py info.
+    """
     msg = """
     Log Level:
         CRITICAL: 50 (FATAL = CRITICAL)
@@ -128,13 +179,13 @@ def help():
         message = None: string, More message
     
     formatException() args:
-        e_msg         : string, message of Exception (e.args[0])
-        programInfo   : dict,   traceback info (traceback.extract_tb(tb)[-1] (cl, exc, tb = sys.exc_info()))
+        e_msg         : string, Message of Exception (e.args[0])
+        programInfo   : dict,   Traceback info (traceback.extract_tb(tb)[-1] (cl, exc, tb = sys.exc_info()))
         action        : string, Action performed
         message = None: string, More message
     
     writeLog() args:
-        info          : dict, is return value of formatLog() or formatException()
+        info          : dict, The return value of formatLog() or formatException()
     """
     print(msg)
 
@@ -143,6 +194,9 @@ def help():
 # Test for each function
 # -----------------------------------------------------------
 def testFunc():
+    """
+    Test for each function.
+    """
     print("test formatLog().")
     log_info = formatLog(10, "Hey-Fish-What-are-you-doing\FishLog.py", "line 142, in testFunc()", "Test formatLog()")
     writeLog(log_info)

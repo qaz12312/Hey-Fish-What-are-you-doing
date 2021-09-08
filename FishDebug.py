@@ -1,6 +1,8 @@
-# log format for debug
+"""
+Log format for debug mode.
+"""
 from os import getenv, makedirs
-from os.path import isdir
+from os.path import isdir,split
 import sys
 from time import strftime
 from dotenv import load_dotenv
@@ -16,8 +18,23 @@ if not isdir(dir_path):
 # -----------------------------------------------------------
 # Write a log
 # -----------------------------------------------------------
-def writeLog(programInfo, action, message):
-    with open(dir_path + action + '.log', 'w') as f:
+def writeLog(programInfo, file, message):
+    """
+    Write a log.
+
+    Parameters
+    ----------
+    programInfo : `dict[str, Any]`
+        The absolute path of the file & The line where the function is called and function Name (`{"lineNum":int, "funName":False|string, "fileName":string}`).
+    file : `str`
+        File name which you want to write in (There can be no blanks, please use `_` instead).
+    message : `Any`
+    """
+    head = (split(file))[0]
+    if not isdir(dir_path + head):
+        makedirs(dir_path + head)
+    
+    with open(dir_path + file + '.log', 'w') as f:
         f.write("Called from line {}".format(programInfo["lineNum"]))
         if programInfo["funName"] != False:
             f.write(", in {}()".format(programInfo["funName"]))
@@ -26,18 +43,33 @@ def writeLog(programInfo, action, message):
         if type(message).__name__ == 'list' or type(message).__name__ == 'ndarray':
             idx = 0
             for value in message:
+                f.write("[{}] = \n".format(idx))
+
                 if type(value).__name__ == 'list' or type(value).__name__ == 'ndarray':
-                    f.write("[{}] = \n".format(idx))
                     i = 0
                     for val in value:
                         f.write("\t[{}] = {}\n".format(i,val))
                         i += 1
+                
+                elif type(value).__name__ == 'dict':
+                    for key,val in value.items():
+                        if key == "ONLY VALUE":
+                            f.write("\t{}\n".format(val))
+                        else:
+                            f.write("\t{} : {}\n".format(key,val))
+                
                 else:
-                    f.write("[{}] = {}\n".format(idx, value))
+                    f.write("\t{}\n".format(value))
+                
                 idx += 1
+
         elif type(message).__name__ == 'dict':
             for key,val in message.items():
-                f.write("{} : {}\n".format(key,val))
+                if key == "ONLY VALUE":
+                    f.write("{}\n".format(val))
+                else:
+                    f.write("{} : {}\n".format(key,val))
+        
         else:
             f.write("{}\n".format(message))
         
@@ -48,11 +80,14 @@ def writeLog(programInfo, action, message):
 # Get FishDebug.py info
 # -----------------------------------------------------------
 def help():
+    """
+    Get FishDebug.py info.
+    """
     msg = """    
     writeLog() args:
         programPath: dict, The absolute path of the file & The line where the function is called and function Name ({"lineNum":int, "funName":False|string, "fileName":string})
-        action     : string, file name which you want to write in (There can be no blanks, please use _ instead)
-        message    : dict,   message
+        file     : string, File name which you want to write in (There can be no blanks, please use _ instead)
+        message    : Any, Message
     """
     print(msg)
 
@@ -61,6 +96,9 @@ def help():
 # Test for each function
 # -----------------------------------------------------------
 def testFunc():
+    """
+    Test for each function.
+    """
     print("test writeLog().")
     writeLog({"lineNum":47, "funName":"testFunc", "fileName":"C:/Users/88692/Desktop/Hey-Fish-What-are-you-doing/FishDebug.py"},"Test_WriteLog",{'apple':1,'banana':2})
     print("finish.")

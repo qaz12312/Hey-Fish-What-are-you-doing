@@ -4,7 +4,7 @@
 ## 使用 /usr/bin/python3.6 training.py 去跑
 
 ## Code
-+ `convertData.py` : 從 Deeplabcut 取得的資料轉成 LSTM 所要用的格式
++ `convertData.py` : 將 Deeplabcut 的 log 檔中的資料轉成 LSTM 所需格式
 + `training.py` : 訓練 LSTM 資料
 + `rebot.py` : 可用來進行行為分析
 + `FishLog.py` : log 格式
@@ -38,7 +38,7 @@
     + `Y_train.txt` : 訓練資料, 分類labels
 
 
-## usaage
+## Usage
 + test `.env`
     ```python
     from os import getenv

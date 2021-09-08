@@ -1,4 +1,6 @@
-
+"""
+訓練模型並測試.
+"""
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
