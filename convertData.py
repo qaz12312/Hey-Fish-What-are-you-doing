@@ -328,7 +328,7 @@ def normalization(data_arr):
 if __name__ == '__main__':
     print("test.")
 
-    # # The file names that need to be converted to LSTM format
+    # The file names that need to be converted to LSTM format
     CSVpath = PROJECT_PATH + '/testCSV'
     # csvfiles = [f for f in listdir(CSVpath) if isfile(join(CSVpath, f))]
     csvfiles = ['fish_1.csv', 'fish_2.csv', 'fish_3.csv']
