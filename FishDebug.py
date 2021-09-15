@@ -2,7 +2,7 @@
 Log format for debug mode.
 """
 from os import getenv, makedirs
-from os.path import isdir,split
+from os.path import isdir, split
 import sys
 from time import strftime
 from dotenv import load_dotenv
@@ -33,7 +33,7 @@ def writeLog(programInfo, file, message):
     head = (split(file))[0]
     if not isdir(dir_path + head):
         makedirs(dir_path + head)
-    
+
     with open(dir_path + file + '.log', 'w') as f:
         f.write("Called from line {}".format(programInfo["lineNum"]))
         if programInfo["funName"] != False:
@@ -48,31 +48,47 @@ def writeLog(programInfo, file, message):
                 if type(value).__name__ == 'list' or type(value).__name__ == 'ndarray':
                     i = 0
                     for val in value:
-                        f.write("\t[{}] = {}\n".format(i,val))
+                        f.write("\t[{}] = {}\n".format(i, val))
                         i += 1
-                
+
                 elif type(value).__name__ == 'dict':
-                    for key,val in value.items():
+                    for key, val in value.items():
                         if key == "ONLY VALUE":
                             f.write("\t{}\n".format(val))
                         else:
-                            f.write("\t{} : {}\n".format(key,val))
-                
+                            f.write("\t{} : {}\n".format(key, val))
+
                 else:
                     f.write("\t{}\n".format(value))
-                
+
                 idx += 1
 
         elif type(message).__name__ == 'dict':
-            for key,val in message.items():
+            for key, value in message.items():
                 if key == "ONLY VALUE":
-                    f.write("{}\n".format(val))
+                    f.write("{} : \n".format(value))
                 else:
-                    f.write("{} : {}\n".format(key,val))
-        
+                    f.write("{} : ".format(key))
+                    if type(value).__name__ == 'list' or type(value).__name__ == 'ndarray':
+                        f.write("\n")
+                        i = 0
+                        for val in value:
+                            f.write("\t[{}] = {}\n".format(i, val))
+                            i += 1
+                    
+                    elif type(value).__name__ == 'dict':
+                        for k, val in value.items():
+                            if k == "ONLY VALUE":
+                                f.write("\t{}\n".format(val))
+                            else:
+                                f.write("\t{} : {}\n".format(k, val))
+
+                    else:
+                        f.write("{}\n".format(value))
+
         else:
             f.write("{}\n".format(message))
-        
+
         f.write("\n-------------------------------------------------------\n\nFinish write in {}.".format(strftime("%Y-%m-%d %H:%M:%S")))
 
 
@@ -100,20 +116,27 @@ def testFunc():
     Test for each function.
     """
     print("test writeLog().")
-    writeLog({"lineNum":47, "funName":"testFunc", "fileName":"C:/Users/88692/Desktop/Hey-Fish-What-are-you-doing/FishDebug.py"},"Test_WriteLog",{'apple':1,'banana':2})
+    writeLog({
+            "lineNum": 47,
+            "funName": "testFunc",
+            "fileName": "C:/Users/88692/Desktop/Hey-Fish-What-are-you-doing/FishDebug.py"
+        },
+        "Test_WriteLog",
+        {'apple': 1, 'banana': 2}
+    )
     print("finish.")
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 2 :
+    if len(sys.argv) == 2:
         option = sys.argv[1]
-        if option == '-h' or option == '--help': # see help message
+        if option == '-h' or option == '--help':  # see help message
             help()
             sys.exit(0)
         elif option == '--test':
             testFunc()
             sys.exit(0)
-    
+
     print_help = """
     Description:
     List commands

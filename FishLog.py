@@ -19,15 +19,16 @@ file_path = dir_path + "{:%Y-%m-%d}".format(datetime.datetime.now()) + '.log'
 if not isdir(dir_path):
     makedirs(dir_path)
 if not isfile(file_path):
-    with open(file_path, 'w'): pass
+    with open(file_path, 'w'):
+        pass
 
 
 logging.basicConfig(
-    level = logging.DEBUG,
-    filename = file_path, 
-    filemode = 'a+',
-    format = '[%(asctime)s] %(levelname)-8s %(message)s',
-    datefmt = '%Y-%m-%d %H:%M:%S',
+    level=logging.DEBUG,
+    filename=file_path,
+    filemode='a+',
+    format='[%(asctime)s] %(levelname)-8s %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
 )
 
 # -----------------------------------------------------------
@@ -51,7 +52,7 @@ def writeLog(info):
         logging.error(log)
     elif level == logging.WARNING:
         logging.warning(log)
-    elif level== logging.INFO:
+    elif level == logging.INFO:
         logging.info(log)
     else:
         logging.debug(log)
@@ -78,7 +79,7 @@ def writeLog(info):
 # -----------------------------------------------------------
 # Format a log
 # -----------------------------------------------------------
-def formatLog(level, programPath, programName, action, message = None):
+def formatLog(level, programPath, programName, action, message=None):
     """
     Format a log.
 
@@ -101,10 +102,10 @@ def formatLog(level, programPath, programName, action, message = None):
     """
     log_info = {
         'logLevel': level,
-        'message' : {
-            'state'      : "Success",
-            'action'     : action,
-            'message'    :'',
+        'message': {
+            'state': "Success",
+            'action': action,
+            'message': '',
             'programPath': programPath,
             'programName': programName,
         }
@@ -117,7 +118,7 @@ def formatLog(level, programPath, programName, action, message = None):
 # -----------------------------------------------------------
 # Format an exception
 # -----------------------------------------------------------
-def formatException(e_msg, programInfo, action, message = None):
+def formatException(e_msg, programInfo, action, message=None):
     """
     Format an exception.
 
@@ -136,17 +137,17 @@ def formatException(e_msg, programInfo, action, message = None):
     -------
     `dict[str, Any]`
     """
-    if programInfo[2]=='<module>':
+    if programInfo[2] == '<module>':
         programName = "line {}".format(programInfo[1])
-    else :
-        programName = "line {}, in {}()".format(programInfo[1],programInfo[2])
-    
+    else:
+        programName = "line {}, in {}()".format(programInfo[1], programInfo[2])
+
     log_info = {
         'logLevel': logging.CRITICAL,
-        'message' : {
-            'state'      : "Failure",
-            'action'     : action,
-            'message'    : e_msg,
+        'message': {
+            'state': "Failure",
+            'action': action,
+            'message': e_msg,
             'programPath': programInfo[0],
             'programName': programName,
         }
@@ -206,8 +207,8 @@ def testFunc():
     try:
         raise ValueError('Test.')
     except Exception as e:
-        cl, exc, tb = sys.exc_info() #取得Call Stack
-        lastCallStack = extract_tb(tb)[-1] #取得Call Stack的最後一筆資料
+        cl, exc, tb = sys.exc_info()  # 取得Call Stack
+        lastCallStack = extract_tb(tb)[-1]  # 取得Call Stack的最後一筆資料
         log_info = formatException(e.args[0], lastCallStack, "Test formatException()")
         writeLog(log_info)
     finally:
@@ -215,15 +216,15 @@ def testFunc():
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 2 :
+    if len(sys.argv) == 2:
         option = sys.argv[1]
-        if option == '-h' or option == '--help': # see help message
+        if option == '-h' or option == '--help':  # see help message
             help()
             sys.exit(0)
         elif option == '--test':
             testFunc()
             sys.exit(0)
-    
+
     print_help = """
     Description:
     List commands
