@@ -5,6 +5,7 @@
 
 ## Code
 + `convertData.py` : 將 Deeplabcut 的 log 檔中的資料轉成 LSTM 所需格式
+    + `convertData_fun.py`: 將 code 拆成獨立 function
 + `training.py` : 訓練 LSTM 資料
 + `rebot.py` : 可用來進行行為分析
 + `FishLog.py` : log 格式
@@ -16,8 +17,18 @@
     + 查看 function arg `python .\FishDebug.py --help`
     + 執行測試 function `python .\FishDebug.py --test`
 
+### coding style
++ 變數命名
+    + ...`_arr` : 是 ndarray
+    + ...`_list` : 是 list
+    + ...`_dict` : 是 dict
+    + ...`_iter` : 可以迭代
+
 
 ## Directory
++ `tests/Unit` : unit test
+    + `TestConvertData.py`
+
 + `testCSV` : Deeplabcut 取得的資料
     + `DLC0818.csv` : /media/ntou501/4f2b9da8-a755-49a3-afea-60704f1a7d00/merge/mergeFish0816-cse509-2021-08-16/test/test2DLC_resnet50_mergeFish0816Aug16shuffle1_50000.csv
         + 08/18 第一次訓練模型
@@ -25,6 +36,7 @@
         + 08/30 第二次訓練模型
     + `GH010241.csv` : /media/ntou501/4f2b9da8-a755-49a3-afea-60704f1a7d00/merge/mergeFish0816-cse509-2021-08-16/test/GH010241croppedDLC_resnet50_mergeFish0816Aug16shuffle1_50000.csv
         + 08/30 第二次訓練模型
+
 + `convertTo_txt` : LSTM 測試用資料
 + `log` : 依執行時間落log
 + `debug` : 測試執行結果
@@ -53,13 +65,20 @@
     + 存入 `pip freeze > requirements.txt`
     + 安裝 `pip install -r requirements.txt`
 
+
 ## Message
 + 09/06 (一)
     + feat: 新增 log 格式
 + 09/07 (二)
     + feat: 新增 debug log 格式
-    + update: 新增指令 for FishLog.py
-    + new: 新增 .env 檔和 requirements.txt
+    + update: 新增指令 for `FishLog.py`
+    + new: 新增 `.env` 檔和 `requirements.txt`
 + 09/08 (三)
     + feat: 將 Deeplabcut 的 log 檔中的資料轉成 LSTM 所需格式
-    + new: 新增 .env.example
+    + new: 新增 `.env.example`
++ 09/15 (三)
+    + update: 更新`convertData.py`
+        + 新增-切 frame、正規化(scale、Rotation)
+        + 修改
+            - 移除 Deeplabcut 在標記座標點時, 有誤差的座標點
+            - 正背面 & 有缺的 frame1、frame2 設為分段點
