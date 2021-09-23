@@ -40,52 +40,99 @@ def writeLog(programInfo, file, message):
             f.write(", in {}()".format(programInfo["funName"]))
         f.write(", {}.\n\n-------------------------------------------------------\n\n".format(programInfo["fileName"]))
         # write log
-        if type(message).__name__ == 'list' or type(message).__name__ == 'ndarray':
-            idx = 0
-            for value in message:
-                f.write("[{}] = \n".format(idx))
-
-                if type(value).__name__ == 'list' or type(value).__name__ == 'ndarray':
-                    i = 0
-                    for val in value:
-                        f.write("\t[{}] = {}\n".format(i, val))
-                        i += 1
-
-                elif type(value).__name__ == 'dict':
-                    for key, val in value.items():
-                        if key == "ONLY VALUE":
-                            f.write("\t{}\n".format(val))
+        if type(message).__name__ in ['list', 'ndarray']:
+            for msg_idx in range(len(message)):
+                f.write("[{}] = ".format(msg_idx))
+                msg = message[msg_idx]
+                if type(msg).__name__ in ['list', 'ndarray']:
+                    f.write("\n")
+                    for m_idx in range(len(msg)):
+                        f.write("\t[{}] = ".format(m_idx))
+                        m = msg[m_idx]
+                        if type(m).__name__ == 'dict':
+                            f.write("\n")
+                            for key, val in m.items():
+                                if key == "ONLY VALUE":
+                                    f.write("\t\t{}\n".format(val))
+                                else:
+                                    f.write("\t\t{} : {}\n".format(key, val))
+                        elif (type(m).__name__ in ['list', 'ndarray']) and (len(m) > 0) and (type(m[0]).__name__ in ['list', 'ndarray']):
+                            f.write("\n")
+                            for idx in range(len(m)):
+                                f.write("\t\t[{}] = {}\n".format(idx, m[idx]))
                         else:
-                            f.write("\t{} : {}\n".format(key, val))
-
-                else:
-                    f.write("\t{}\n".format(value))
-
-                idx += 1
-
-        elif type(message).__name__ == 'dict':
-            for key, value in message.items():
-                if key == "ONLY VALUE":
-                    f.write("{} : \n".format(value))
-                else:
-                    f.write("{} : ".format(key))
-                    if type(value).__name__ == 'list' or type(value).__name__ == 'ndarray':
-                        f.write("\n")
-                        i = 0
-                        for val in value:
-                            f.write("\t[{}] = {}\n".format(i, val))
-                            i += 1
-                    
-                    elif type(value).__name__ == 'dict':
-                        for k, val in value.items():
-                            if k == "ONLY VALUE":
-                                f.write("\t{}\n".format(val))
+                            f.write("\t\t{}\n".format(m))
+                elif type(msg).__name__ == 'dict':
+                    f.write("\n")
+                    for m_key, m in msg.items():
+                        if m_key == "ONLY VALUE":
+                            f.write("\t{}\n".format(m))
+                        else:
+                            f.write("\t{} : ".format(m_key))
+                            if type(m).__name__ == 'dict':
+                                f.write("\n")
+                                for key, val in m.items():
+                                    if key == "ONLY VALUE":
+                                        f.write("\t\t{}\n".format(val))
+                                    else:
+                                        f.write(
+                                            "\t\t{} : {}\n".format(key, val))
+                            elif (type(m).__name__ in ['list', 'ndarray']) and (len(m) > 0) and (type(m[0]).__name__ in ['list', 'ndarray']):
+                                f.write("\n")
+                                for idx in range(len(m)):
+                                    f.write("\t\t[{}] = {}\n".format(idx, m[idx]))
                             else:
-                                f.write("\t{} : {}\n".format(k, val))
-
+                                f.write("{}\n".format(m))
+                else:
+                    f.write("{}\n".format(msg))
+        elif type(message).__name__ == 'dict':
+            for msg_key, msg in message.items():
+                if msg_key == "ONLY VALUE":
+                    f.write("{}\n".format(msg))
+                else:
+                    f.write("{} : ".format(msg_key))
+                    if type(msg).__name__ in ['list', 'ndarray']:
+                        f.write("\n")
+                        for m_idx in range(len(msg)):
+                            f.write("\t[{}] = ".format(m_idx))
+                            m = msg[m_idx]
+                            if type(m).__name__ == 'dict':
+                                f.write("\n")
+                                for key, val in m.items():
+                                    if key == "ONLY VALUE":
+                                        f.write("\t\t{}\n".format(val))
+                                    else:
+                                        f.write(
+                                            "\t\t{} : {}\n".format(key, val))
+                            elif (type(m).__name__ in ['list', 'ndarray']) and (len(m) > 0) and (type(m[0]).__name__ in ['list', 'ndarray']):
+                                f.write("\n")
+                                for idx in range(len(m)):
+                                    f.write("\t\t[{}] = {}\n".format(idx, m[idx]))
+                            else:
+                                f.write("\t\t{}\n".format(m))
+                    elif type(msg).__name__ == 'dict':
+                        f.write("\n")
+                        for m_key, m in msg.items():
+                            if m_key == "ONLY VALUE":
+                                f.write("\t{}\n".format(m))
+                            else:
+                                f.write("\t{} : ".format(m_key))
+                                if type(m).__name__ == 'dict':
+                                    f.write("\n")
+                                    for key, val in m.items():
+                                        if key == "ONLY VALUE":
+                                            f.write("\t\t{}\n".format(val))
+                                        else:
+                                            f.write(
+                                                "\t\t{} : {}\n".format(key, val))
+                                elif (type(m).__name__ in ['list', 'ndarray']) and (len(m) > 0) and (type(m[0]).__name__ in ['list', 'ndarray']):
+                                    f.write("\n")
+                                    for idx in range(len(m)):
+                                        f.write("\t\t[{}] = {}\n".format(idx, m[idx]))
+                                else:
+                                    f.write("{}\n".format(m))
                     else:
-                        f.write("{}\n".format(value))
-
+                        f.write("{}\n".format(msg))
         else:
             f.write("{}\n".format(message))
 
