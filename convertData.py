@@ -15,23 +15,15 @@ NOT_USED_LIST = [int(x) for x in getenv('NOT_USED').split(',')]  # 不使用的�
 TOTAL_POINTS = int(getenv('TOTAL_POINTS')) - len(NOT_USED_LIST)  # 1 個 frame 有 n 個座標點
 N_STEPS = int(getenv('N_STEPS'))  # n frame 為一個 action
 CHECK_FRONT_BACK = [int(x) for x in getenv('CHECK_FRONT_BACK').split(',')]  # frame 為正背面時, 不會有的座標點
+temp_jump = int(getenv('JUMP_N_FRAME'))  # 一秒取 n 個 frame
+if temp_jump < 1:
+    temp_jump = 1
+JUMP_N_FRAME = temp_jump
 # for 正規化
 TRANSLATION_POINT = int(getenv('TRANSLATION_POINT'))  # translation, 以第 n 個座標點為基準點(0,0)
 MIRROR_POINT = int(getenv('MIRROR_POINT'))  # mirror, 以第 n 個座標點是否為負來判斷是否鏡像(旋轉)
 SCALE_LEN = int(getenv('SCALE_LEN'))  # scale, MIRROR_POINT 到 TRANSLATION_POINT 的長度
-CHECK_ROTATE = bool(getenv('MIRROR_POINT'))  # 正規化資料時, 是否也檢查旋轉
-'''Debug
-print("project_path = {}".format(PROJECT_PATH))
-print("not_used_list = {}".format(NOT_USED_LIST))
-print("total_points = {}".format(TOTAL_POINTS))
-print("n_steps = {}".format(N_STEPS))
-print("check_front_back = {}".format(CHECK_FRONT_BACK))
-print("translation_point = {}".format(TRANSLATION_POINT))
-print("mirror_point = {}".format(MIRROR_POINT))
-print("check_rotate = {}".format(CHECK_ROTATE))
-print("scale_len = {}".format(SCALE_LEN))
-'''
-
+CHECK_ROTATE = bool(getenv('MIRROR_POINT'))  # 正規化資料時, 是否檢查旋轉(否則就檢查鏡像)
 
 # -----------------------------------------------------------
 # Read Deeplabcut log file (.csv) to get the coordinates that LSTM needs to use.
@@ -247,9 +239,12 @@ def _frameSplit(data_arr, cut_list):
     '''
     result_list = []
     cut_set = set(cut_list)
-    max_action_count = len(data_arr)-N_STEPS+1  # 最多會有 y 個 actions 產生
+
+    max_action_count = len(data_arr)-((N_STEPS-1)*JUMP_N_FRAME+1)+1  # 最多會有 y 個 actions 產生
+    if max_action_count < 1 :
+        raise  # 資料量太少
     for start_frame_idx in range(max_action_count):
-        frame_in_action_range = range(start_frame_idx, start_frame_idx+N_STEPS)
+        frame_in_action_range = range(start_frame_idx, start_frame_idx+((N_STEPS-1)*JUMP_N_FRAME+1), JUMP_N_FRAME)
         if set(frame_in_action_range) & cut_set:  # 若 action 裡有 frame 是分段點
             continue
         normalized_data = normalization(copy.deepcopy(np.array(data_arr[frame_in_action_range])), CHECK_ROTATE)
@@ -328,6 +323,28 @@ def normalization(data_arr, check_rotate=True):
             data_arr[idx] = np.dot(transformation_arr, data_arr[idx])
 
     return data_arr
+
+
+def _getENV():
+    """
+    取得環境變數
+
+    Returns
+    -------
+    `dict` 10個元素
+    """
+    return {
+        'project_path': PROJECT_PATH,
+        'not_used_list': NOT_USED_LIST,
+        'total_points': TOTAL_POINTS,
+        'n_steps': N_STEPS,
+        'check_front_back': CHECK_FRONT_BACK,
+        'translation_point': TRANSLATION_POINT,
+        'mirror_point': MIRROR_POINT,
+        'check_rotate': CHECK_ROTATE,
+        'scale_len': SCALE_LEN,
+        'jump_n_frame':JUMP_N_FRAME,    
+    }
 
 
 if __name__ == '__main__':
