@@ -46,6 +46,7 @@ def writeLog(programInfo, file, message):
                 msg = message[msg_idx]
                 if type(msg).__name__ in ['list', 'ndarray']:
                     f.write("\n")
+                    msg = list(msg)
                     for m_idx in range(len(msg)):
                         f.write("\t[{}] = ".format(m_idx))
                         m = msg[m_idx]
@@ -59,7 +60,7 @@ def writeLog(programInfo, file, message):
                         elif (type(m).__name__ in ['list', 'ndarray']) and (len(m) > 0) and (type(m[0]).__name__ in ['list', 'ndarray']):
                             f.write("\n")
                             for idx in range(len(m)):
-                                f.write("\t\t[{}] = {}\n".format(idx, m[idx]))
+                                f.write("\t\t[{}] = {}\n".format(idx, list(m[idx])))
                         else:
                             f.write("\t\t{}\n".format(m))
                 elif type(msg).__name__ == 'dict':
@@ -80,7 +81,7 @@ def writeLog(programInfo, file, message):
                             elif (type(m).__name__ in ['list', 'ndarray']) and (len(m) > 0) and (type(m[0]).__name__ in ['list', 'ndarray']):
                                 f.write("\n")
                                 for idx in range(len(m)):
-                                    f.write("\t\t[{}] = {}\n".format(idx, m[idx]))
+                                    f.write("\t\t[{}] = {}\n".format(idx, list(m[idx])))
                             else:
                                 f.write("{}\n".format(m))
                 else:
@@ -107,7 +108,7 @@ def writeLog(programInfo, file, message):
                             elif (type(m).__name__ in ['list', 'ndarray']) and (len(m) > 0) and (type(m[0]).__name__ in ['list', 'ndarray']):
                                 f.write("\n")
                                 for idx in range(len(m)):
-                                    f.write("\t\t[{}] = {}\n".format(idx, m[idx]))
+                                    f.write("\t\t[{}] = {}\n".format(idx, list(m[idx])))
                             else:
                                 f.write("\t\t{}\n".format(m))
                     elif type(msg).__name__ == 'dict':
@@ -128,7 +129,7 @@ def writeLog(programInfo, file, message):
                                 elif (type(m).__name__ in ['list', 'ndarray']) and (len(m) > 0) and (type(m[0]).__name__ in ['list', 'ndarray']):
                                     f.write("\n")
                                     for idx in range(len(m)):
-                                        f.write("\t\t[{}] = {}\n".format(idx, m[idx]))
+                                        f.write("\t\t[{}] = {}\n".format(idx, list(m[idx])))
                                 else:
                                     f.write("{}\n".format(m))
                     else:

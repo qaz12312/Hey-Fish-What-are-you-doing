@@ -1,5 +1,5 @@
 import sys
-# adding Folder_2 to the system path
+# adding files to the system path
 sys.path.insert(0, 'C:/Users/88692/Desktop/Hey-Fish-What-are-you-doing')
 import unittest
 import convertData
@@ -40,17 +40,20 @@ class TestConvertData(unittest.TestCase):
             'z_axis': 21 - 8
         }
 
+        # --function content----------------------------------
         result = convertData.getCoords('tests/Unit/DLC_log.csv')
 
+        # --Assertion-----------------------------------------
         self.assertIsInstance(result, type(np.array([])))
         self.assertEqual(expected['shape'], result.shape)
         for idx in range(len(result)):
             frame = result[idx]
             self.assertEqual(expected['z_axis'], np.sum(frame[2]))
             
+            # --Log-------------------------------------------
             log_data["frame[{}] (x,y)".format(idx)] = "[\n\t{},\n\t{}],".format(list(frame[0]), list(frame[1]))
         FishDebug.writeLog(
-            {"lineNum": 43,
+            {"lineNum": 44,
              "funName": "test_getCoords",
              "fileName": "./tests/Unit/TestConvertData.py"},
             "_Unit_Test/convertData/1getCoords.log",
@@ -63,14 +66,20 @@ class TestConvertData(unittest.TestCase):
             [[10, 30, 50, 70, 90, 110, 130], [20, 40, 60, 80, 100, 120, 140], [1, 1, 1, 1, 1, 1, 1]],
         ], dtype=object)
 
+        # --function content----------------------------------
         result = convertData.writeData('debug/_Unit_Test/convertData/0writeData.txt', test_data)
 
+        # --Assertion-----------------------------------------
         self.assertTrue(result)
         # 要去確認文件
     
     def test_convertToUsefulPart1(self):
         log_data = {'The data_arr is use': 'missing_arr'}
         test_case = [[], [2], [5, 7, 8]]  # CHECK_FRONT_BACK
+        expected = {
+            'shape': self.missing_arr.shape,
+            'z_axis': [list(z) for z in self.missing_arr[:, 2]]
+        }
 
         for check_front_back in test_case:
             log_data_item = {}
@@ -83,10 +92,12 @@ class TestConvertData(unittest.TestCase):
                 empty_indices_arr = (np.where(data_arr[frame_idx][0] != data_arr[frame_idx][0]))[0]
                 is_front_back_arr = np.in1d(check_front_back, empty_indices_arr, assume_unique=True)
 
+                # --Log-------------------------------------------
                 log_data_item_frame = {
-                    "empty coord_idx": empty_indices_arr,
-                    "is front back {}".format(set(check_front_back)): is_front_back_arr}
+                    "-t1 empty coord_idx": empty_indices_arr,
+                    "-front back {}".format(tuple(check_front_back)): is_front_back_arr}
 
+                # --function content------------------------------
                 if (np.sum(is_front_back_arr[:3]) == 3) or (np.sum(is_front_back_arr[3:]) == 4):
                     cut_list.append(frame_idx)
                 else:
@@ -103,24 +114,45 @@ class TestConvertData(unittest.TestCase):
                         else:
                             cut_list.append(frame_idx)
 
-                    log_data_item_frame["is side {0,1}"] = is_side_arr
-                    log_data_item_frame["still has empty coord_idx"] = empty_indices_arr
+                    # --Log--------------------------------------
+                    log_data_item_frame["-right left (0,1)"] = is_side_arr
+                    log_data_item_frame["-t2 empty coord_idx"] = empty_indices_arr
                 log_data_item["frame[{}]".format(frame_idx)] = log_data_item_frame
-            log_data_item["interpolation_dict for _fillInCoords()"] = interpolation_dict
-            log_data_item["cut_list for _frameSplit()"] = cut_list
-            log_data_item["result data_arr"] = data_arr
-            log_data["Test case-CHECK_FRONT_BACK={}".format(check_front_back)] = log_data_item
+            log_data_item["dict for _fillInCoords()"] = interpolation_dict
+            log_data_item["list for _frameSplit()  "] = cut_list
+            data_list = list()
+
+            # --Assertion-----------------------------------------
+            self.assertIsInstance(data_arr, type(np.array([])))
+            self.assertEqual(expected['shape'], data_arr.shape)
+            for idx in range(len(data_arr)):
+                frame = data_arr[idx]
+                self.assertEqual(len(expected['z_axis'][idx]), len(frame[2]))
+                for z_idx in range(len(frame[2])):
+                    if np.isnan(expected['z_axis'][idx][z_idx]):
+                        self.assertTrue(frame[2][z_idx] != frame[2][z_idx])
+                    else:
+                        self.assertEqual(expected['z_axis'][idx][z_idx], frame[2][z_idx])
+
+                # --Log-------------------------------------------
+                data_list.append([list(frame[0]), list(frame[1]), list(frame[2])])
+            log_data_item["result data_arr"] = data_list
+            log_data["\nTest case-CHECK_FRONT_BACK={}".format(check_front_back)] = log_data_item
         FishDebug.writeLog(
-            {"lineNum": 79,
+            {"lineNum": 88,
              "funName": "test_convertToUsefulPart1",
              "fileName": "./tests/Unit/TestConvertData.py"},
-            "_Unit_Test/convertData/21convertToUseful.log",
+            "_Unit_Test/convertData/2_1convertToUseful.log",
             log_data
         )
 
     def test_convertToUsefulPart2(self):
         log_data = {'The data_arr is use': 'missing_arr'}
         test_case = [[], [2], [5, 7, 8]]  # CHECK_FRONT_BACK
+        expected = {
+            'shape': self.missing_arr.shape,
+            'z_axis': [list(z) for z in self.missing_arr[:, 2]]
+        }
 
         for check_front_back in test_case:
             data_arr = copy.deepcopy(self.missing_arr)
@@ -149,12 +181,25 @@ class TestConvertData(unittest.TestCase):
             if bool(interpolation_dict):
                 data_arr = convertData._fillInCoords(data_arr, interpolation_dict)
             
-            log_data["Test case-CHECK_FRONT_BACK={}".format(check_front_back)] = data_arr
+            # --Assertion-----------------------------------------
+            self.assertIsInstance(data_arr, type(np.array([])))
+            self.assertEqual(expected['shape'], data_arr.shape)
+            for idx in range(len(data_arr)):
+                frame = data_arr[idx]
+                self.assertEqual(len(expected['z_axis'][idx]), len(frame[2]))
+                for z_idx in range(len(frame[2])):
+                    if np.isnan(expected['z_axis'][idx][z_idx]):
+                        self.assertTrue(frame[2][z_idx] != frame[2][z_idx])
+                    else:
+                        self.assertEqual(expected['z_axis'][idx][z_idx], frame[2][z_idx])
+
+            # --Log-----------------------------------------------
+            log_data["\nTest case-CHECK_FRONT_BACK={}".format(check_front_back)] = data_arr
         FishDebug.writeLog(
-            {"lineNum": 128,
+            {"lineNum": 160,
              "funName": "test_convertToUsefulPart2",
              "fileName": "./tests/Unit/TestConvertData.py"},
-            "_Unit_Test/convertData/22convertToUseful.log",
+            "_Unit_Test/convertData/2_2convertToUseful.log",
             log_data
         )
 
@@ -166,35 +211,31 @@ class TestConvertData(unittest.TestCase):
         ]
         expected = {
             'shape': self.missing_arr.shape,
-            'z_axis': [
-                [np.newaxis, 0, 0, 0, np.newaxis, 0, 0, 0, 0, 0],
-                [1, 1, np.newaxis, 1, 1, 1, np.newaxis, np.newaxis, 1, 1],
-                [2, 2, 2, np.newaxis, np.newaxis, np.newaxis, 2, 2, 2, 2],
-                [np.newaxis, np.newaxis, 3, 3, 3, 3, 3, np.newaxis, 3, 3],
-                [4, 4, 4, 4, 4, np.newaxis, 4, np.newaxis, np.newaxis, 4],
-                [5, 5, 5, 5, 5, 5, 5, 5, np.newaxis, np.newaxis],
-            ]
+            'z_axis': [list(z) for z in self.missing_arr[:, 2]]
         }
 
         for interpolation_dict in test_case:
             data_arr = copy.deepcopy(self.missing_arr)
 
+            # --function content----------------------------------
             result = convertData._fillInCoords(data_arr, interpolation_dict)
 
+            # --Assertion-----------------------------------------
             self.assertIsInstance(result, type(np.array([])))
             self.assertEqual(expected['shape'], result.shape)
             for idx in range(len(result)):
                 frame = result[idx]
                 self.assertEqual(len(expected['z_axis'][idx]), len(frame[2]))
                 for z_idx in range(len(frame[2])):
-                    if expected['z_axis'][idx][z_idx] == None:
+                    if np.isnan(expected['z_axis'][idx][z_idx]):
                         self.assertTrue(frame[2][z_idx] != frame[2][z_idx])
                     else:
                         self.assertEqual(expected['z_axis'][idx][z_idx], frame[2][z_idx])
 
-            log_data["Test case: interpolation_dict={}".format(interpolation_dict)] = result
+            # --Log-----------------------------------------------
+            log_data["\nTest case-interpolation_dict={}".format(interpolation_dict)] = result
         FishDebug.writeLog(
-            {"lineNum": 182,
+            {"lineNum": 221,
              "funName": "test__fillInCoords",
              "fileName": "./tests/Unit/TestConvertData.py"},
             "_Unit_Test/convertData/3_fillInCoords.log",
@@ -221,30 +262,36 @@ class TestConvertData(unittest.TestCase):
             # --function content----------------------------------
             result_list = []
             cut_set = set(cut_list)
-            
             max_action_count = len(data_arr)-((N_STEPS-1)*JUMP_N_FRAME+1)+1
-            log_data_item = {
-                "The actions that will be at most generated": max_action_count}
 
+            # --Log-----------------------------------------------
+            log_data_item = {
+                "max action times": max_action_count}
+
+            # --function content----------------------------------
             for start_frame_idx in range(max_action_count):
                 frame_in_action_range = range(start_frame_idx, start_frame_idx+((N_STEPS-1)*JUMP_N_FRAME+1), JUMP_N_FRAME)
                 if set(frame_in_action_range) & cut_set:
+                    # --Log---------------------------------------
                     log_data_item["{}".format(tuple(frame_in_action_range))] = "No"
                     continue
+                # --Log-------------------------------------------
                 log_data_item["{}".format(tuple(frame_in_action_range))] = "Yes"
+                # --function content------------------------------
                 normalized_data = copy.deepcopy(np.array(data_arr[frame_in_action_range]))
                 for frame_idx in range(N_STEPS):
                     result_list.append(normalized_data[frame_idx])
             
+            # --Log-----------------------------------------------
             log_data_item["result data_arr"] = result_list
             result = np.array(result_list, dtype=object)
             log_data_item["result shape"] = result.shape
-            log_data["Test case-{}".format(test)] = log_data_item
+            log_data["\nTest case-{}".format(test)] = log_data_item
         FishDebug.writeLog(
-            {"lineNum": 221,
+            {"lineNum": 262,
              "funName": "test__frameSplitPart",
              "fileName": "./tests/Unit/TestConvertData.py"},
-            "_Unit_Test/convertData/41_frameSplit.log",
+            "_Unit_Test/convertData/4_1_frameSplit.log",
             log_data
         )
 
@@ -253,6 +300,9 @@ class TestConvertData(unittest.TestCase):
         test_case = [
             {'cut_list': [5], 'N_STEPS':3, 'JUMP_N_FRAME':1, 'CHECK_ROTATE':True},
         ]
+        expected = {
+            'z_axis': self.data_arr[0][2]
+        }
 
         for test in test_case:
             log_data_item = {}
@@ -265,29 +315,53 @@ class TestConvertData(unittest.TestCase):
             # --function content----------------------------------
             result_list = []
             cut_set = set(cut_list)
-
             max_action_count = len(data_arr)-((N_STEPS-1) * JUMP_N_FRAME+1)+1
             for start_frame_idx in range(max_action_count):
                 frame_in_action_range = range(start_frame_idx, start_frame_idx+((N_STEPS-1)*JUMP_N_FRAME+1), JUMP_N_FRAME)
                 if set(frame_in_action_range) & cut_set:
                     continue
-                need_to_normalize = np.array(self.data_arr[frame_in_action_range])
+                need_to_normalize = np.array(data_arr[frame_in_action_range])
                 normalized_data = convertData.normalization(copy.deepcopy(need_to_normalize), CHECK_ROTATE)
                 for frame_idx in range(N_STEPS):
                     result_list.append(normalized_data[frame_idx])
                 
-                log_data_item["frame{}".format(list(frame_in_action_range))] = {
-                    "need_to_normalize": need_to_normalize,
-                    "normalized_data": normalized_data,
-                    "shape of need_to_normalize / normalized_data": "{}/{}".format(need_to_normalize.shape, normalized_data.shape),
+                # --Assertion-------------------------------------
+                self.assertEqual(need_to_normalize.shape, normalized_data.shape)
+                need_to_normalize_list, normalized_data_list = list(), list()
+                for idx in range(len(need_to_normalize)):
+                    frame_1, frame_2 = need_to_normalize[idx], normalized_data[idx]
+                    self.assertEqual(len(expected['z_axis']), len(frame_1[2]))
+                    self.assertEqual(len(expected['z_axis']), len(frame_2[2]))
+                    for z_idx in range(len(frame_1[2])):
+                        self.assertEqual(expected['z_axis'][z_idx], frame_1[2][z_idx])
+                        self.assertEqual(expected['z_axis'][z_idx], frame_2[2][z_idx])
+
+                    # --Log----------------------------------------
+                    need_to_normalize_list.append([list(frame_1[0]), list(frame_1[1])])  # 需要畫出圖才能確定
+                    normalized_data_list.append([list(frame_2[0]), list(frame_2[1])])  # 需要畫出圖才能確定
+                log_data_item["frame{}".format(tuple(frame_in_action_range))] = {
+                    "need_to_normalize": need_to_normalize_list,
+                    "normalized_data": normalized_data_list,
+                    "shape of above": "{}".format(need_to_normalize.shape),
                 }
+            
             result = np.array(result_list, dtype=object)
 
-            log_data_item["result data_arr"] = result
+            # --Assertion------------------------------------------
+            result_list = list()
+            for idx in range(len(result)):
+                frame = result[idx]
+                self.assertEqual(len(expected['z_axis']), len(frame[2]))
+                for z_idx in range(len(frame[2])):
+                    self.assertEqual(expected['z_axis'][z_idx], frame[2][z_idx])
+
+                # --Log--------------------------------------------
+                result_list.append([list(frame[0]), list(frame[1])])  # 需要畫出圖才能確定
+            log_data_item["result data_arr"] = result_list
             log_data_item["result shape"] = result.shape
-            log_data["Test case-{}".format(test)] = log_data_item
+            log_data["\nTest case-{}".format(test)] = log_data_item
         FishDebug.writeLog(
-            {"lineNum": 265,
+            {"lineNum": 315,
              "funName": "test__frameSplit",
              "fileName": "./tests/Unit/TestConvertData.py"},
             "_Unit_Test/convertData/4_frameSplit.log",
@@ -299,14 +373,16 @@ class TestConvertData(unittest.TestCase):
         test_case = [True, False]  # CHECK_ROTATE
         expected = {
             'shape': self.data_arr.shape,
-            'z_axis': copy.deepcopy(self.data_arr[0][2])
+            'z_axis': self.data_arr[0][2]
         }
 
         for check_rotate in test_case:
             data_arr = copy.deepcopy(self.data_arr)
             
+            # --function content----------------------------------
             result = convertData.normalization(data_arr, check_rotate)
 
+            # --Assertion-----------------------------------------
             self.assertIsInstance(result, type(np.array([])))
             self.assertEqual(expected['shape'], result.shape)
             log_data_item = []
@@ -316,10 +392,11 @@ class TestConvertData(unittest.TestCase):
                 for z_idx in range(len(frame[2])):
                     self.assertEqual(expected['z_axis'][z_idx], frame[2][z_idx])
                 
+                # --Log-------------------------------------------
                 log_data_item.append("[{},{}],".format(list(frame[0]), list(frame[1])))  # 需要畫出圖才能確定
-            log_data["Test case-check_rotate={}".format(str(check_rotate))] = log_data_item
+            log_data["\nTest case-check_rotate={}".format(str(check_rotate))] = log_data_item
         FishDebug.writeLog(
-            {"lineNum": 308,
+            {"lineNum": 382,
              "funName": "test_normalization",
              "fileName": "./tests/Unit/TestConvertData.py"},
             "_Unit_Test/convertData/5normalization.log",
