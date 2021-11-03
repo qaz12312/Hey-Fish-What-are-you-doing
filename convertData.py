@@ -348,14 +348,14 @@ def _getENV():
 
 
 if __name__ == '__main__':
-    print("test.")
+    print("Start convert data.")
 
     # The file names that need to be converted to LSTM format
     CSVpath = PROJECT_PATH + '/testCSV'
     # csvfiles = [f for f in listdir(CSVpath) if isfile(join(CSVpath, f))]
     csvfiles = ['fish_1.csv', 'fish_2.csv', 'fish_3.csv']
     for file in csvfiles:
-        print(file)
+        print(file+".....")
         data_x = getCoords(PROJECT_PATH + '/testCSV/' + file)
         usable_data_x = convertToUseful(data_x)
         # write into new file
@@ -363,4 +363,4 @@ if __name__ == '__main__':
         print('./convertTo_txt/' + file + ': {}.\n'.format(status))
         FishDebug.writeLog({"lineNum": 342, "funName": "normalization", "fileName": "./convertData.py"}, "convertData/v0.1_all/" + file[:-4]+'.txt', usable_data_x)
 
-    print("finish.")
+    print("Finish.")
