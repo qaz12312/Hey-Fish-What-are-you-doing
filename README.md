@@ -64,21 +64,3 @@
 + `requirements.txt`
     + 存入 `pip freeze > requirements.txt`
     + 安裝 `pip install -r requirements.txt`
-
-
-## Message
-+ 09/06 (一)
-    + feat: 新增 log 格式
-+ 09/07 (二)
-    + feat: 新增 debug log 格式
-    + update: 新增指令 for `FishLog.py`
-    + new: 新增 `.env` 檔和 `requirements.txt`
-+ 09/08 (三)
-    + feat: 將 Deeplabcut 的 log 檔中的資料轉成 LSTM 所需格式
-    + new: 新增 `.env.example`
-+ 09/15 (三)
-    + update: 更新`convertData.py`
-        + 新增-切 frame、正規化(scale、Rotation)
-        + 修改
-            - 移除 Deeplabcut 在標記座標點時, 有誤差的座標點
-            - 正背面 & 有缺的 frame1、frame2 設為分段點
