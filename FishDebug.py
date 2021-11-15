@@ -3,13 +3,14 @@ Log format for debug mode.
 """
 from os import getenv, makedirs
 from os.path import isdir, split
-import sys
+from sys import exit
+import argparse
 from time import strftime
 from dotenv import load_dotenv
 
 load_dotenv()
 # 設定目錄
-dir_path = getenv('PROJECT_PATH') + '/debug/'
+dir_path = getenv('PROJECT_PATH') + '/log/debug/'
 
 # 若不存在則新建
 if not isdir(dir_path):
@@ -41,14 +42,16 @@ def writeLog(programInfo, file, message):
         f.write(", {}.\n\n-------------------------------------------------------\n\n".format(programInfo["fileName"]))
         # write log
         if type(message).__name__ in ['list', 'ndarray']:
-            for msg_idx in range(len(message)):
-                f.write("[{}] = ".format(msg_idx))
+            message_len = len(message)
+            for msg_idx in range(message_len):
+                f.write("[{:<{prec}d}] = ".format(msg_idx,prec=len(str(message_len))))
                 msg = message[msg_idx]
                 if type(msg).__name__ in ['list', 'ndarray']:
                     f.write("\n")
                     msg = list(msg)
-                    for m_idx in range(len(msg)):
-                        f.write("\t[{}] = ".format(m_idx))
+                    msg_len = len(msg)
+                    for m_idx in range(msg_len):
+                        f.write("\t[{:<{prec}d}] = ".format(m_idx,prec=len(str(msg_len))))
                         m = msg[m_idx]
                         if type(m).__name__ == 'dict':
                             f.write("\n")
@@ -59,8 +62,9 @@ def writeLog(programInfo, file, message):
                                     f.write("\t\t{} : {}\n".format(key, val))
                         elif (type(m).__name__ in ['list', 'ndarray']) and (len(m) > 0) and (type(m[0]).__name__ in ['list', 'ndarray']):
                             f.write("\n")
-                            for idx in range(len(m)):
-                                f.write("\t\t[{}] = {}\n".format(idx, list(m[idx])))
+                            m_len = len(m)
+                            for idx in range(m_len):
+                                f.write("\t\t[{:<{prec}d}] = {}\n".format(idx, list(m[idx]),prec=len(str(m_len))))
                         else:
                             f.write("\t\t{}\n".format(m))
                 elif type(msg).__name__ == 'dict':
@@ -80,8 +84,9 @@ def writeLog(programInfo, file, message):
                                             "\t\t{} : {}\n".format(key, val))
                             elif (type(m).__name__ in ['list', 'ndarray']) and (len(m) > 0) and (type(m[0]).__name__ in ['list', 'ndarray']):
                                 f.write("\n")
-                                for idx in range(len(m)):
-                                    f.write("\t\t[{}] = {}\n".format(idx, list(m[idx])))
+                                m_len = len(m)
+                                for idx in range(m_len):
+                                    f.write("\t\t[{:<{prec}d}] = {}\n".format(idx, list(m[idx]),prec=len(str(m_len))))
                             else:
                                 f.write("{}\n".format(m))
                 else:
@@ -94,8 +99,9 @@ def writeLog(programInfo, file, message):
                     f.write("{} : ".format(msg_key))
                     if type(msg).__name__ in ['list', 'ndarray']:
                         f.write("\n")
-                        for m_idx in range(len(msg)):
-                            f.write("\t[{}] = ".format(m_idx))
+                        msg_len = len(msg)
+                        for m_idx in range(msg_len):
+                            f.write("\t[{:<{prec}d}] = ".format(m_idx,prec=len(str(msg_len))))
                             m = msg[m_idx]
                             if type(m).__name__ == 'dict':
                                 f.write("\n")
@@ -107,8 +113,9 @@ def writeLog(programInfo, file, message):
                                             "\t\t{} : {}\n".format(key, val))
                             elif (type(m).__name__ in ['list', 'ndarray']) and (len(m) > 0) and (type(m[0]).__name__ in ['list', 'ndarray']):
                                 f.write("\n")
-                                for idx in range(len(m)):
-                                    f.write("\t\t[{}] = {}\n".format(idx, list(m[idx])))
+                                m_len = len(m)
+                                for idx in range(m_len):
+                                    f.write("\t\t[{:<{prec}d}] = {}\n".format(idx, list(m[idx]),prec=len(str(m_len))))
                             else:
                                 f.write("\t\t{}\n".format(m))
                     elif type(msg).__name__ == 'dict':
@@ -118,20 +125,22 @@ def writeLog(programInfo, file, message):
                                 f.write("\t{}\n".format(m))
                             else:
                                 f.write("\t{} : ".format(m_key))
-                                if type(m).__name__ == 'dict':
-                                    f.write("\n")
-                                    for key, val in m.items():
-                                        if key == "ONLY VALUE":
-                                            f.write("\t\t{}\n".format(val))
-                                        else:
-                                            f.write(
-                                                "\t\t{} : {}\n".format(key, val))
-                                elif (type(m).__name__ in ['list', 'ndarray']) and (len(m) > 0) and (type(m[0]).__name__ in ['list', 'ndarray']):
-                                    f.write("\n")
-                                    for idx in range(len(m)):
-                                        f.write("\t\t[{}] = {}\n".format(idx, list(m[idx])))
-                                else:
-                                    f.write("{}\n".format(m))
+                                # if type(m).__name__ == 'dict':
+                                #     f.write("\n")
+                                #     for key, val in m.items():
+                                #         if key == "ONLY VALUE":
+                                #             f.write("\t\t{}\n".format(val))
+                                #         else:
+                                #             f.write(
+                                #                 "\t\t{} : {}\n".format(key, val))
+                                # elif (type(m).__name__ in ['list', 'ndarray']) and (len(m) > 0) and (type(m[0]).__name__ in ['list', 'ndarray']):
+                                #     f.write("\n")
+                                #     m_len = len(m)
+                                #     for idx in range(m_len):
+                                #         f.write("\t\t[{:<{prec}d}] = {}\n".format(idx, list(m[idx]),prec=len(str(m_len))))
+                                # else:
+                                #     f.write("{}\n".format(m))
+                                f.write("{}\n".format(m))
                     else:
                         f.write("{}\n".format(msg))
         else:
@@ -148,11 +157,10 @@ def help():
     Get FishDebug.py info.
     """
     msg = """    
-    writeLog() args:
-        programPath: dict, The absolute path of the file & The line where the function is called and function Name ({"lineNum":int, "funName":False|string, "fileName":string})
-        file     : string, File name which you want to write in (There can be no blanks, please use _ instead)
-        message    : Any, Message
-    """
+writeLog() args:
+    programPath: dict, The absolute path of the file & The line where the function is called and function Name ({"lineNum":int, "funName":False|string, "fileName":string})
+    file       : string, File name which you want to write in (There can be no blanks, please use _ instead)
+    message    : Any, Message"""
     print(msg)
 
 
@@ -175,25 +183,30 @@ def testFunc():
     print("finish.")
 
 
+parser = argparse.ArgumentParser(description="Write log in log/debug dir.")
+parser.add_argument('-s', '--see', help='Display function args info', action="store_true")
+parser.add_argument('-t', '--test', help='Run test for each function', action="store_true")
+
 if __name__ == '__main__':
-    if len(sys.argv) == 2:
-        option = sys.argv[1]
-        if option == '-h' or option == '--help':  # see help message
-            help()
-            sys.exit(0)
-        elif option == '--test':
-            testFunc()
-            sys.exit(0)
+    args = parser.parse_args()
+    print(f"第 1 個引數：{args.see:^10}，type={type(args.see)}")
+    print(f"第 2 個引數：{args.test:^10}，type={type(args.test)}")
+    if args.see:
+        help()
+    if args.test:
+        testFunc()
+        exit(0)  
+    if not (args.see or args.test):
+        print_help = """
+Description:
+Write log in log/debug dir.
 
-    print_help = """
-    Description:
-    List commands
+Usage:
+FishDebug.py [-h] [-s] [-t]
 
-    Usage:
-    FishDebug.py [options]
-
-    Options:
-    -h, --help  Display function args info
-        --test  Run test for each function
-    """
-    print(print_help)
+optional arguments:
+    -h, --help       show this help message and exit
+    -s, --see        Display function args info
+    -t, --test       Run test for each function
+        """
+        print(print_help)

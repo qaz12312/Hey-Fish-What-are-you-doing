@@ -24,7 +24,7 @@ if not isfile(file_path):
 
 
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     filename=file_path,
     filemode='a+',
     format='[%(asctime)s] %(levelname)-8s %(message)s',
