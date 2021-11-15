@@ -42,10 +42,16 @@ then
     done
 
     echo -e '\e[1;43mLoading all croods files.....\e[0m'
-    
+    if [ ! -d ./CSV/test ];then
+        mkdir ./CSV/test
+    fi
+    if [ ! -d ./CSV/train ];then
+        mkdir ./CSV/train
+    fi
     total_files=0
-    for directory in "${label_dir[@]}"
+    for key in "${label[@]}"
     do
+        directory=${label_dir[$key]}
         abs_dir_path=$label_dir_path$directory
         file_count=0
         if [ -d "$abs_dir_path" ]  # 檢查是否為目錄
@@ -94,7 +100,7 @@ echo -e "\e[1;43mConvert data.....\e[0m"
 /usr/bin/python3.6 convertData.py
 echo "**********************************************************"
 read -p '執行幾種 hidden cell (從 1層 開始) ? ' hidden_types
-while ! [[ "$hidden_types" =~ ^[1-9]+$ ]]
+while ! [[ "$hidden_types" =~ ^[1-9][0-9]*$ ]]
 do
     read -p $'[!警告]只能輸入大於 1 的正整數\n執行幾種 hidden cell (從 1層 開始) ? ' hidden_types
 done
