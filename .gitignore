@@ -1,6 +1,9 @@
 log/
+lstm_log/
 debug/
 RNN-HAR-2D-Pose-database/
+CSV/test/
+CSV/train/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -106,7 +109,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-# .env
+.env
 .venv
 env/
 venv/
