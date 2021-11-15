@@ -1,6 +1,6 @@
 # !/usr/bin/python3.6
 """
-訓練模型並測試.
+訓練模型並測試. for example
 """
 import tensorflow as tf # Version 1.0.0 (some previous versions are used in past commits)
 from dotenv import load_dotenv
@@ -11,26 +11,25 @@ from sklearn import metrics
 import random
 from random import randint  # 證明此網路架構真的有運作: 用隨機類替換標記類以進行訓練
 import time
-import argparse
 import FishLog
 import FishDebug
 
 load_dotenv()
-parser = argparse.ArgumentParser(description="Run lstm for fish.")
-parser.add_argument('--hidden', help='n_hidden',type=int, default=34)
-args = parser.parse_args()
+
 run_time_start = time.time()
-FishLog.writeLog(FishLog.formatLog(20, "training.py", "line 23", "Start running the file.", "tensorflow version={}, n_hidden={:<3d}".format(tf.version.VERSION, args.hidden)))
+FishLog.writeLog(FishLog.formatLog(20, "training.py", "line 20", "Start running the file.", "tensorflow version={}".format(tf.version.VERSION)))
 # -----------------------------------------------------------
 # Preparing dataset
 # -----------------------------------------------------------
 LABELS = [
-    "normal",
-    "hunger",
-    # "rest",
-    # "exception",
+    "normal",  # 原本 "JUMPING",
+    "hunger",  # 原本 "JUMPING_JACKS",
+    "rest",  # 原本 "BOXING",
+    "exception",  # "WAVING_2HANDS",
+    "WAVING_1HAND",
+    "CLAPPING_HANDS"
 ]
-n_steps = int(getenv('N_STEPS'))
+n_steps = 32
 '''
 幾個frame是一個動作
 '''
@@ -38,7 +37,7 @@ n_classes = len(LABELS)
 '''
 共有幾個分類.
 '''
-DATASET_PATH = "convertTo_txt/"
+DATASET_PATH = "RNN-HAR-2D-Pose-database/"
 X_train_path = DATASET_PATH + "X_train.txt"
 X_test_path = DATASET_PATH + "X_test.txt"
 y_train_path = DATASET_PATH + "Y_train.txt"
@@ -125,11 +124,11 @@ Y_test = load_Y(y_test_path)
 # Set Hyperparameters & Parameters
 # -----------------------------------------------------------
 # Input Data
-training_data_count = len(X_train)
+training_data_count = len(X_train) # 4519 training series(action) (每筆action有 50% 重疊)
 '''
 共有幾筆動作.
 '''
-test_data_count = len(X_test)
+test_data_count = len(X_test)  # 1197 test series
 '''
 共有幾筆動作.
 '''
@@ -137,7 +136,7 @@ n_input = len(X_train[0][0])
 '''
 一個frame裡有幾個座標點(x+y)。n input/timestep(frame).
 '''
-n_hidden = args.hidden
+n_hidden = 34
 '''
 number of neurons in hidden layer(自己假設)
 '''
@@ -188,7 +187,7 @@ training_iterations = training_data_count * epochs
 '''
 訓練次數.train step 上限
 '''
-batch_size = 1000 #n_steps*137 # [原本] n_steps*128 # 4096
+batch_size = n_steps*128 # 4096
 '''
 批量大小。每次的迭代，送入類神經網路的資料數量.
 '''
@@ -302,37 +301,27 @@ def one_hot(y_):
 # -----------------------------------------------------------
 # 定義類神經網路模型 Build the network
 # -----------------------------------------------------------
-x = tf.compat.v1.placeholder(tf.float32, [None, n_steps, n_input])
-# x = tf.placeholder(tf.float32, [None, n_steps, n_input])
+x = tf.placeholder(tf.float32, [None, n_steps, n_input])
 '''
 Input.
 3D=[x筆動作, frame數, 座標點數]
 '''
-y = tf.compat.v1.placeholder(tf.float32, [None, n_classes])
-# y = tf.placeholder(tf.float32, [None, n_classes])
+y = tf.placeholder(tf.float32, [None, n_classes])
 '''
 Output.
 2D=[x筆動作, label數]
 '''
 weights = {
-    'hidden': tf.Variable(tf.random.normal([n_input, n_hidden])), # Hidden layer
-    'out': tf.Variable(tf.random.normal([n_hidden, n_classes], mean=1.0))
+    'hidden': tf.Variable(tf.random_normal([n_input, n_hidden])), # Hidden layer
+    'out': tf.Variable(tf.random_normal([n_hidden, n_classes], mean=1.0))
 }
-# weights = {
-#     'hidden': tf.Variable(tf.random_normal([n_input, n_hidden])), # Hidden layer
-#     'out': tf.Variable(tf.random_normal([n_hidden, n_classes], mean=1.0))
-# }
 '''
 權重.
 '''
 biases = {
-    'hidden': tf.Variable(tf.random.normal([n_hidden])),
-    'out': tf.Variable(tf.random.normal([n_classes]))
+    'hidden': tf.Variable(tf.random_normal([n_hidden])),
+    'out': tf.Variable(tf.random_normal([n_classes]))
 }
-# biases = {
-#     'hidden': tf.Variable(tf.random_normal([n_hidden])),
-#     'out': tf.Variable(tf.random_normal([n_classes]))
-# }
 '''
 偏差值.
 '''
@@ -340,8 +329,7 @@ pred = LSTM_RNN(x, weights, biases)
 '''
 Graph.
 '''
-l2 = lambda_loss_amount * sum(tf.nn.l2_loss(tf_var) for tf_var in tf.compat.v1.trainable_variables())
-# l2 = lambda_loss_amount * sum(tf.nn.l2_loss(tf_var) for tf_var in tf.trainable_variables())
+l2 = lambda_loss_amount * sum(tf.nn.l2_loss(tf_var) for tf_var in tf.trainable_variables())
 '''
 Loss function 的懲罰項
 - 對抗 Overfitting: Weight decay -- 不讓模型 fit 時過度依賴一些 weights
@@ -352,15 +340,13 @@ Loss function.
 - `softmax_cross_entropy_with_logits`: 結合 Softmax & Cross Entropy 的函式
 '''
 if decaying_learning_rate:  # exponentially decayed learning rate
-    learning_rate = tf.compat.v1.train.exponential_decay(init_learning_rate, global_step*batch_size, decay_steps, decay_rate, staircase=True)
-    # learning_rate = tf.train.exponential_decay(init_learning_rate, global_step*batch_size, decay_steps, decay_rate, staircase=True)
+    learning_rate = tf.train.exponential_decay(init_learning_rate, global_step*batch_size, decay_steps, decay_rate, staircase=True)
     # decayed_learning_rate = init_learning_rate * decay_rate ^ (global_step / decay_steps) 
     # 初始學習率 init_learning_rate
     # 總訓練步數 global_step*batch_size
     # 衰減率 decay_steps
     # decay_rate = 100: 每100步衰減一次(stair=True時)
-optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost, global_step=global_step)  # Adam Optimizer
-# optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost, global_step=global_step)  # Adam Optimizer
+optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost, global_step=global_step)  # Adam Optimizer
 '''
 優化器(optimizer)
 - Adam Optimizer: 會在訓練時動態更新 learning_rate
@@ -388,10 +374,8 @@ train_accuracy_list = []
 test_loss_list = []
 test_accuracy_list = []
 # 啟動 Session
-sess = tf.compat.v1.InteractiveSession(config=tf.compat.v1.ConfigProto(log_device_placement=True))
-# sess = tf.InteractiveSession(config=tf.ConfigProto(log_device_placement=True))
-init = tf.compat.v1.global_variables_initializer()
-# init = tf.global_variables_initializer()
+sess = tf.InteractiveSession(config=tf.ConfigProto(log_device_placement=True))
+init = tf.global_variables_initializer()
 sess.run(init)
 
 time_start = time.time()
@@ -445,7 +429,7 @@ test_accuracy_list.append(final_accuracy)
 
 # debug by Polly in 2021/11/3
 print_log_list.append("\nTrain network time: {}\nFinal result: Loss= {:.3f}, Acc= {:.3f}\n".format(time.time() - time_start, final_loss, final_accuracy))
-FishLog.writeLog(FishLog.formatLog(20, "training.py", "line 448", "Train & Run The Network.", "Train network time: {}".format(time.time() - time_start)))
+FishLog.writeLog(FishLog.formatLog(20, "training.py", "line 432", "Train & Run The Network.", "Train network time: {}".format(time.time() - time_start)))
 
 
 # -----------------------------------------------------------
@@ -497,14 +481,13 @@ plt.yticks(tick_marks, LABELS)
 plt.tight_layout()
 plt.xlabel('Predicted label')
 plt.ylabel('True label')
-# plt.show()
+plt.show()
 
 # 關閉 Session
 sess.close()
 
-# log
-FishLog.writeLog(FishLog.formatLog(20, "training.py", "line 506", "Finish running the file.", "Total time: {}".format(time.time() - run_time_start)))
-FishDebug.writeLog({"lineNum": 507, "funName": False, "fileName": "training.py"}, "test/v0_{}_hidden".format(n_hidden), {
+FishLog.writeLog(FishLog.formatLog(20, "training.py", "line 489", "Finish running the file.", "Total time: {}".format(time.time() - run_time_start)))
+FishDebug.writeLog({"lineNum": 490, "funName": False, "fileName": "training.py"}, "training/v0Open/{}_hidden".format(n_hidden), {
     "X_train shape": X_train.shape,
     "Y_train shape": Y_train.shape,
     "(X_train) training data count": training_data_count,
@@ -531,21 +514,6 @@ FishDebug.writeLog({"lineNum": 507, "funName": False, "fileName": "training.py"}
     "Testing Accuracy": final_accuracy,
     "\nPrecision": metrics.precision_score(Y_test, predictions, average="weighted"),
     "Recall": metrics.recall_score(Y_test, predictions, average="weighted"),
-    "f1_score": metrics.f1_score(Y_test, predictions, average="weighted"), 
+    "f1_score": metrics.f1_score(Y_test, predictions, average="weighted"),
     "\nconfusion_matrix": confusion_matrix,
     "normalised_confusion_matrix": normalised_confusion_matrix, })
-
-with open('log/records/Only2_Hidden_result.txt', 'a') as f:
-    message = {'hidden {}*{}'.format(n_hidden,n_hidden):print_log_list[-1]}
-    for msg_key, msg in message.items():
-        f.write("{} : {}\n".format(msg_key,msg))
-
-with open('log/records/Only2_Hidden.txt', 'a') as f:
-    message = {'hidden {}*{}'.format(n_hidden,n_hidden):{
-        'losses':test_loss_list,
-        'accuracies':test_accuracy_list
-        }}
-    for msg_key, msg in message.items():
-        f.write("{} : \n".format(msg_key))
-        for m_key, m in msg.items():
-            f.write("\t{} : {}\n".format(m_key,m))

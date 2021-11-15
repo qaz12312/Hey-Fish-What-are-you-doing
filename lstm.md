@@ -31,6 +31,7 @@ tf.transpose(arr,[1,0,2]) # 交換維度。把對應的輸入張量的對應的�
 tf.reshape(arr, [-1, 32]) # 將 arr.shape 變成 ?*32
 product = tf.matmul(matrix1,matrix2) # 矩陣相乘(matrix1*matrix2)
 tf.nn.relu(a) # 將輸入<0 的值設為0(負數變為0)，輸入>0 的值不變
+tf.train.exponential_decay(init_learning_rate, global_step*batch_size, decay_steps, decay_rate, staircase=True) # f內建的一個生成動態減小學習率的函式
 ```
 ## [RNN 用法彙整](https://www.twblogs.net/a/5ca59985bd9eee5b1a072277)
 ### 最基本的LSTM循環神經網絡單元
@@ -95,3 +96,11 @@ tf.nn.relu(a) # 將輸入<0 的值設為0(負數變為0)，輸入>0 的值不變
     + `dynamic_rnn` v.s `static_rnn`
         + static_rnn不同的batch序列长度必须是相同的，都必须是 n_steps  ，dynamic_rnn不用
         + dynamic_rnn 比 static_rnn 快的原因是：dynamic_rnn运行到序列长度后自动停止，不再运行，而static_rnn必须运行完 n_steps 才停止
+
+## sklearn
++ 總結分類模型預測結果的情形分析表 `sklearn.metrics.confusion_matrix(y_true, y_pred, labels=None, sample_weight=None)`
+    + 參數
+        + `y_true`: 是樣本真實分類結果
+        + `y_pred`: 是樣本預測分類結果
+        + `labels`: 是所給出的類別，通過這個可對類別進行選擇
+        + `sample_weight`: 樣本權重
