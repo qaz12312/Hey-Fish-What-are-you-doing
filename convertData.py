@@ -7,7 +7,7 @@ import copy
 from os import getenv, listdir
 from os.path import isfile, join
 from dotenv import load_dotenv
-import FishDebug
+import FishLog
 
 load_dotenv()
 PROJECT_PATH = getenv('PROJECT_PATH')
@@ -28,7 +28,7 @@ CHECK_ROTATE = bool(getenv('MIRROR_POINT'))  # 正規化資料時, 是否檢查�
 # -----------------------------------------------------------
 # Read Deeplabcut log file (.csv) to get the coordinates that LSTM needs to use.
 # -----------------------------------------------------------
-def getCoords(filePath):
+def getCoords(filePath,is_example=False):
     """
     Read Deeplabcut log file (.csv) to get the coordinates that LSTM needs to use.
 
@@ -36,6 +36,8 @@ def getCoords(filePath):
     ----------
     filePath : `str`
         The absolute path of the log file.
+    is_example : `bool`
+        For example
 
     Returns
     -------
@@ -47,12 +49,16 @@ def getCoords(filePath):
     with open(filePath, newline='') as f:
         frame_iter = reader(f)  # 讀取 CSV 檔案內容
         line = 0
+        if is_example:
+            sep_part = 2
+        else:
+            sep_part = 3
+
         for frame_coords in frame_iter:
             line += 1
             if line < 4:  # 略過前3行
                 continue
-
-            # 第一個(xxx.png)不需要
+            # 第一個(coords))不需要
             temp_arr = np.array(frame_coords[1:], dtype=object)
 
             # 若有座標點 = '', 將 '' 轉成 None
@@ -65,11 +71,10 @@ def getCoords(filePath):
 
             # remove not_used coords
             data_x.append([
-                np.delete(temp_arr[::2], NOT_USED_LIST),   # x 座標
-                np.delete(temp_arr[1::2], NOT_USED_LIST),  # y 座標
+                np.delete(temp_arr[::sep_part], NOT_USED_LIST),   # x 座標
+                np.delete(temp_arr[1::sep_part], NOT_USED_LIST),  # y 座標
                 np.ones(TOTAL_POINTS)                      # z 座標
             ])
-
     return np.array(data_x, dtype=object)
     """Return value
     [
@@ -87,7 +92,7 @@ def getCoords(filePath):
 # -----------------------------------------------------------
 # Write data(3D coordinate array) into file (.txt)
 # -----------------------------------------------------------
-def writeData(filePath, data_arr):
+def writeData(filePath, data_arr,n_actions,label,fileName):
     """
     Write data(3D coordinate array) into file (.txt).
 
@@ -97,19 +102,25 @@ def writeData(filePath, data_arr):
         The absolute path of the file.
     data_arr : `ndarray` (dtype = object, element type = float64)  /?是否只要是ndarray
         3D(y*N_STEPS, 3, 21-x)
+    n_actions : `int`
+        y
+    label: `int`
+    fileName : `str`
+        test, train, fish
 
     Returns
     -------
     `True`
     """
-    with open(filePath, 'w') as f:
+    with open(filePath+'X_'+ fileName +'.txt', 'a') as f:
         for frame in data_arr:
             # frame_arr = [x1, y1, ..., xn, yn]
             frame_arr = frame[0][:]  # frame_arr = x 座標 array
             for idx in range(len(frame[1])):  # 將 y 座標 array insert 到 frame_arr
                 frame_arr = np.insert(frame_arr, idx*2+1, frame[1][idx])
             f.write("{}\n".format(",".join(x for x in ["%s" % num for num in frame_arr])))
-
+    with open(filePath+'Y_'+ fileName +'.txt', 'a') as f:
+        f.write("{}\n".format(label)*n_actions)
     return True
 
 
@@ -132,6 +143,8 @@ def convertToUseful(data_arr):
     -------
     `ndarray` (dtype = object, element type = float64)
         3D(N, 3, 21-x)
+    `int`
+        number of actions
     """
     cut_list = []            # 要註記的 frame_number (從 0 開始算)
     interpolation_dict = {}  # { frame_number : [要填補的座標點] }
@@ -161,6 +174,7 @@ def convertToUseful(data_arr):
                     cut_list.append(frame_idx)
 
     if bool(interpolation_dict):  # if interpolation_dict is not empty
+        print("fill the coords\n{}".format(interpolation_dict))
         data_arr = _fillInCoords(data_arr, interpolation_dict)
 
     return _frameSplit(data_arr, cut_list)
@@ -236,13 +250,17 @@ def _frameSplit(data_arr, cut_list):
     -------
     `ndarray` (dtype = object, element type = float64)
         3D(y*N_STEPS, 3, 21-x)
+    `int`
+        number of actions
     '''
     result_list = []
     cut_set = set(cut_list)
+    total_actions = 0
 
     max_action_count = len(data_arr)-((N_STEPS-1)*JUMP_N_FRAME+1)+1  # 最多會有 y 個 actions 產生
     if max_action_count < 1 :
-        raise  # 資料量太少
+        print("資料量太少 Failed")
+        return np.array([], dtype=object),total_actions
     for start_frame_idx in range(max_action_count):
         frame_in_action_range = range(start_frame_idx, start_frame_idx+((N_STEPS-1)*JUMP_N_FRAME+1), JUMP_N_FRAME)
         if set(frame_in_action_range) & cut_set:  # 若 action 裡有 frame 是分段點
@@ -250,8 +268,9 @@ def _frameSplit(data_arr, cut_list):
         normalized_data = normalization(copy.deepcopy(np.array(data_arr[frame_in_action_range])), CHECK_ROTATE)
         for frame_idx in range(N_STEPS):
             result_list.append(normalized_data[frame_idx])
+        total_actions += 1
 
-    return np.array(result_list, dtype=object)
+    return np.array(result_list, dtype=object),total_actions
 
 
 # -----------------------------------------------------------
@@ -347,20 +366,47 @@ def _getENV():
     }
 
 
+def convert(is_example=False):
+    '''
+    The files converts to LSTM format.
+    '''
+    failed_path_list = []
+    if is_example:
+        dirs = ['fish']
+    else:
+        dirs = ['test','train']
+    for dir in dirs:
+        CSVpath = PROJECT_PATH + '/CSV/' + dir
+        csvfiles = [f for f in listdir(CSVpath) if isfile(join(CSVpath, f))]
+        for file in csvfiles:
+            print(file+".....")
+            data_x = getCoords(CSVpath +'/' + file,is_example)
+            usable_data_x,n_actions = convertToUseful(data_x)
+            if n_actions<=0:
+                failed_path_list.append(CSVpath +'/' + file)
+            else:
+                # write into new file
+                if(file[0]=='n'):
+                    label=1
+                elif(file[0]=='f'):
+                    label=2
+                elif(file[0]=='s'):
+                    label=3
+                else:
+                    label=4
+                status = "finish" if writeData(PROJECT_PATH + '/convertTo_txt/', usable_data_x,n_actions,label,dir) else "failure"
+            print('./convertTo_txt/' + file + ': {}.\n'.format(status))
+    
+    fail_times = len(failed_path_list)
+    if fail_times > 0:
+        print("失敗 {} 次 :".format(fail_times))
+        for path in failed_path_list:
+            print("\t{}".format(path))
+        FishLog.writeLog(FishLog.formatLog(30, "convertData.py", "line 368", "Convert the file.", "failed files: {}".format(failed_path_list)))
+    else:
+        print("ALL SUCCESS")
+        FishLog.writeLog(FishLog.formatLog(20, "convertData.py", "line 368", "Convert the file.", "ALL SUCCESS"))
+
+
 if __name__ == '__main__':
-    print("Start convert data.")
-
-    # The file names that need to be converted to LSTM format
-    CSVpath = PROJECT_PATH + '/testCSV'
-    # csvfiles = [f for f in listdir(CSVpath) if isfile(join(CSVpath, f))]
-    csvfiles = ['fish_1.csv', 'fish_2.csv', 'fish_3.csv']
-    for file in csvfiles:
-        print(file+".....")
-        data_x = getCoords(PROJECT_PATH + '/testCSV/' + file)
-        usable_data_x = convertToUseful(data_x)
-        # write into new file
-        status = "finish" if writeData(PROJECT_PATH + '/convertTo_txt/' + file[:-4] + '_X_train.txt', usable_data_x) else "failure"
-        print('./convertTo_txt/' + file + ': {}.\n'.format(status))
-        FishDebug.writeLog({"lineNum": 342, "funName": "normalization", "fileName": "./convertData.py"}, "convertData/v0.1_all/" + file[:-4]+'.txt', usable_data_x)
-
-    print("Finish.")
+    convert()
