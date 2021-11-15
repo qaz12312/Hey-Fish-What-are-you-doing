@@ -4,7 +4,8 @@
 """
 import tensorflow as tf # Version 1.0.0 (some previous versions are used in past commits)
 from dotenv import load_dotenv
-from os import getenv
+from os import getenv, makedirs
+from os.path import isdir
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import metrics
@@ -504,7 +505,7 @@ sess.close()
 
 # log
 FishLog.writeLog(FishLog.formatLog(20, "training.py", "line 506", "Finish running the file.", "Total time: {}".format(time.time() - run_time_start)))
-FishDebug.writeLog({"lineNum": 507, "funName": False, "fileName": "training.py"}, "test/v0_{}_hidden".format(n_hidden), {
+FishDebug.writeLog({"lineNum": 507, "funName": False, "fileName": "training.py"}, "Only2/v0_{}_hidden".format(n_hidden), {
     "X_train shape": X_train.shape,
     "Y_train shape": Y_train.shape,
     "(X_train) training data count": training_data_count,
@@ -535,15 +536,17 @@ FishDebug.writeLog({"lineNum": 507, "funName": False, "fileName": "training.py"}
     "\nconfusion_matrix": confusion_matrix,
     "normalised_confusion_matrix": normalised_confusion_matrix, })
 
-with open('log/records/Only2_Hidden_result.txt', 'a') as f:
-    message = {'hidden {}*{}'.format(n_hidden,n_hidden):print_log_list[-1]}
-    for msg_key, msg in message.items():
-        f.write("{} : {}\n".format(msg_key,msg))
+temp_dir = 'log/records/Only2/'
+if not isdir(temp_dir):
+    makedirs(temp_dir)
 
-with open('log/records/Only2_Hidden.txt', 'a') as f:
-    message = {'hidden {}*{}'.format(n_hidden,n_hidden):{
-        'losses':test_loss_list,
-        'accuracies':test_accuracy_list
+with open(temp_dir + 'Hidden_result.txt', 'a') as f:
+    f.write("hidden {:<2d}*{:<2d}: {}\n".format(n_hidden,n_hidden,print_log_list[-1]))
+
+with open(temp_dir + 'Hidden_array.txt', 'a') as f:
+    message = {'hidden {:<2d}*{:<2d}'.format(n_hidden,n_hidden):{
+        'los':test_loss_list,
+        'acc':test_accuracy_list
         }}
     for msg_key, msg in message.items():
         f.write("{} : \n".format(msg_key))
