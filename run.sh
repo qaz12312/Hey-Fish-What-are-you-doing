@@ -10,38 +10,49 @@ do
 done
 if [ "$is_load" = 'y' ]
 then
+    read -p '是否清空在 CSV 資料夾裡的先前資料? (type:y/n) ' is_clear
+    while [ "$is_load" != 'y' ] && [ "$is_load" != 'n' ]
+    do
+        echo "$(tput setaf 5)[!警告]只能輸入 y 或是 n$(tput sgr 0)"
+        read -p '是否清空在 CSV 資料夾裡的先前資料? (type:y/n) ' is_clear
+    done
+    if [ "$is_clear" = 'y' ]
+    then
+        rm -rf ./CSV/*
+    fi
+
     declare -A label_dir=( ['f']='forage_test/' ['n']='normal_test/' ['s']='sleep_test/')
     label_dir_path='/media/ntou501/4f2b9da8-a755-49a3-afea-60704f1a7d00/merge/mergeFish0816-cse509-2021-08-16/'
-    read -p $'載入幾種類別的檔案? (type:2/3) ' n_label
-    while [ "$n_label" != '2' ] && [ "$n_label" != '3' ]
-    do
-       read -p $'[!警告]只能輸入 2 或是 3\n載入幾種類別的檔案? (type:2/3) ' n_label
-    done
-    if [ "$n_label" = '2' ]
-    then
-        read -p '要載入的第一種檔案類別為? (type:n/s/f) ' label[0]
-        while [ "${label[0]}" != 'n' ] && [ "${label[0]}" != 's' ] && [ "${label[0]}" != 'f' ];do read -p $'[!警告]只能輸入 n/s/f 這三者之一\n要載入的第一種檔案類別為? (type:n/s/f) ' label[0]; done;
-        read -p '要載入的第二種檔案類別為? (type:n/s/f) ' label[1]
-        while [ "${label[0]}" == "${label[1]}" ] || ([ "${label[1]}" != 'n' ] && [ "${label[1]}" != 's' ] && [ "${label[1]}" != 'f' ])
-        do
-            if [ "${label[0]}" == "${label[1]}" ]
-            then
-                echo '[!警告]不可為同一類別'
-            else
-                echo '[!警告]只能輸入 n/s/f 這三者之一'
-            fi
-            read -p '要載入的第二種檔案類別為? (type:n/s/f) ' label[1]
-        done
-    else
+    # read -p $'載入幾種類別的檔案? (type:2/3) ' n_label
+    # while [ "$n_label" != '2' ] && [ "$n_label" != '3' ]
+    # do
+    #    read -p $'[!警告]只能輸入 2 或是 3\n載入幾種類別的檔案? (type:2/3) ' n_label
+    # done
+    # if [ "$n_label" = '2' ]
+    # then
+    #     read -p '要載入的第一種檔案類別為? (type:n/s/f) ' label[0]
+    #     while [ "${label[0]}" != 'n' ] && [ "${label[0]}" != 's' ] && [ "${label[0]}" != 'f' ];do read -p $'[!警告]只能輸入 n/s/f 這三者之一\n要載入的第一種檔案類別為? (type:n/s/f) ' label[0]; done;
+    #     read -p '要載入的第二種檔案類別為? (type:n/s/f) ' label[1]
+    #     while [ "${label[0]}" == "${label[1]}" ] || ([ "${label[1]}" != 'n' ] && [ "${label[1]}" != 's' ] && [ "${label[1]}" != 'f' ])
+    #     do
+    #         if [ "${label[0]}" == "${label[1]}" ]
+    #         then
+    #             echo '[!警告]不可為同一類別'
+    #         else
+    #             echo '[!警告]只能輸入 n/s/f 這三者之一'
+    #         fi
+    #         read -p '要載入的第二種檔案類別為? (type:n/s/f) ' label[1]
+    #     done
+    # else
         label=('n' 's' 'f')
-    fi
+    # fi
     echo -e "\e[1;34m要載入的類別檔案資料夾: \e[0m"
     for key in "${label[@]}"
     do
         echo -e "\e[1;34m$key ${label_dir[$key]}\e[0m"
     done
 
-    echo -e '\e[1;43mLoading all croods files.....\e[0m'
+    echo -e '\033[30m\e[1;43mLoading all croods files.....\e[0m'
     if [ ! -d ./CSV/test ];then
         mkdir ./CSV/test
     fi
@@ -59,7 +70,7 @@ then
             file_names=($(ls -d "$abs_dir_path"*.csv))
             for file in "${file_names[@]}"
             do
-                if (( $file_count >= 6 )) # modify
+                if [ $(expr $file_count % 3) -eq 2 ] # three
                 then
                     target_dir='test'
                 else
@@ -87,30 +98,34 @@ do
 done
 if [ "$is_remove" = 'y' ]
 then
-    echo -e "\e[1;34mRemove all lstm files: yes\e[0m"
+    echo -e "\e[1;34mRemove all lstm files: yes 資料會重新填寫\e[0m"
     for file in "${lstm_files[@]}"
     do
-        truncate -s 0 "convertTo_txt/$file" # empty content of the file
-        echo "clear convertTo_txt/$file.....success"
+        if [ -f "./convertTo_txt/$file" ]
+        then
+            truncate -s 0 "convertTo_txt/$file" # empty content of the file
+            echo "clear convertTo_txt/$file.....success"
+        fi
     done
 else
-    echo -e "\e[1;34mRemove all lstm files: no\t資料會接續寫下去\e[0m"
+    echo -e "\e[1;34mRemove all lstm files: no 資料會接續寫下去\e[0m"
 fi
-echo -e "\e[1;43mConvert data.....\e[0m"
+echo -e "\033[30m\e[1;43mConvert data.....\e[0m"
 /usr/bin/python3.6 convertData.py
 echo "**********************************************************"
-read -p '執行幾種 hidden cell (從 1層 開始) ? ' hidden_types
-while ! [[ "$hidden_types" =~ ^[1-9][0-9]*$ ]]
-do
-    read -p $'[!警告]只能輸入大於 1 的正整數\n執行幾種 hidden cell (從 1層 開始) ? ' hidden_types
-done
-echo -e "\e[1;43mTraining data.....\e[0m"
-for n_hidden in $(seq 1 $hidden_types);
-do
-    echo -e "\e[1;34mRun hidden cell= $n_hidden\e[0m"
-    /usr/bin/python3.6 training.py --hidden $n_hidden
-done
+# read -p '執行幾種 hidden cell (從 1層 開始) ? ' hidden_types
+# while ! [[ "$hidden_types" =~ ^[1-9][0-9]*$ ]]
+# do
+#     read -p $'[!警告]只能輸入大於 1 的正整數\n執行幾種 hidden cell (從 1層 開始) ? ' hidden_types
+# done
+echo -e "\033[30m\e[1;43mTraining data.....\e[0m"
+# for n_hidden in $(seq 1 $hidden_types);
+# do
+#     echo -e "\e[1;34mRun hidden cell= $n_hidden\e[0m"
+#     /usr/bin/python3.6 training.py --hidden $n_hidden
+# done
+/usr/bin/python3.6 training.py
 
 echo "**********************************************************"
-echo -e "\e[1;42m 結束 \e[0m"
+echo "$(tput setaf 0)$(tput setab 2) 結束 $(tput sgr 0)"
 exit 0

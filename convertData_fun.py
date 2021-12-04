@@ -38,7 +38,7 @@ def frameScale(p_head, p_tail, SCALE_LEN):
                 [0, 0, 1]
             ])
     else:
-        raise  # 照理來說不可能
+        raise ValueError('Failed: Not enough data')  # 照理來說不可能
 
     return False, np.array([])
 

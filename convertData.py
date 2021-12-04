@@ -7,6 +7,8 @@ import copy
 from os import getenv, listdir
 from os.path import isfile, join
 from dotenv import load_dotenv
+import sys
+from traceback import extract_tb
 import FishLog
 
 load_dotenv()
@@ -311,7 +313,7 @@ def normalization(data_arr, check_rotate=True):
             for idx in range(len(data_arr)):
                 data_arr[idx] = np.dot(scale_arr, data_arr[idx])
     else:
-        raise  # 照理來說不可能
+        raise ValueError('Failed: Not enough data')  # 照理來說不可能
 
     # 用 frame1 計算偏移矩陣
     [offset_x, offset_y] = 0-frame1[0][TRANSLATION_POINT], 0-frame1[1][TRANSLATION_POINT]
@@ -369,8 +371,15 @@ def _getENV():
 def convert(is_example=False):
     '''
     The files converts to LSTM format.
+
+    Returns
+    -------
+    `list` 4個元素
+        [訓練測資數量, 測試測資數量, 成功轉換次數, 失敗轉換次數]
     '''
     failed_path_list = []
+    success_times = 0
+    total_actions = {'test':0, 'train':0}
     if is_example:
         dirs = ['fish']
     else:
@@ -382,6 +391,8 @@ def convert(is_example=False):
             print(file+".....")
             data_x = getCoords(CSVpath +'/' + file,is_example)
             usable_data_x,n_actions = convertToUseful(data_x)
+            total_actions[dir] += n_actions
+            status = "failure"
             if n_actions<=0:
                 failed_path_list.append(CSVpath +'/' + file)
             else:
@@ -395,18 +406,26 @@ def convert(is_example=False):
                 else:
                     label=4
                 status = "finish" if writeData(PROJECT_PATH + '/convertTo_txt/', usable_data_x,n_actions,label,dir) else "failure"
+            if status == "finish":
+                success_times += 1
             print('./convertTo_txt/' + file + ': {}.\n'.format(status))
     
     fail_times = len(failed_path_list)
     if fail_times > 0:
-        print("失敗 {} 次 :".format(fail_times))
+        print("成功 {} 次 / 失敗 {} 次 : 失敗檔案如下".format(success_times, fail_times))
         for path in failed_path_list:
             print("\t{}".format(path))
-        FishLog.writeLog(FishLog.formatLog(30, "convertData.py", "line 368", "Convert the file.", "failed files: {}".format(failed_path_list)))
-    else:
-        print("ALL SUCCESS")
-        FishLog.writeLog(FishLog.formatLog(20, "convertData.py", "line 368", "Convert the file.", "ALL SUCCESS"))
+        FishLog.writeLog(FishLog.formatLog(30, "convertData.py", "line 418", "Fail convert data.", "failed files: {}".format(failed_path_list)))
+
+    return total_actions['train'], total_actions['test'], success_times, fail_times
 
 
 if __name__ == '__main__':
-    convert()
+    try:
+        n_train, n_test, n_success, n_fail = convert()
+    except Exception as e:
+        cl, exc, tb = sys.exc_info()  # 取得Call Stack
+        FishLog.writeLog(FishLog.formatException(e.args[0], extract_tb(tb)[0], "Convert data."))
+    else:
+        # log
+        FishLog.writeLog(FishLog.formatLog(20, "training.py", "line 431", "Convert data.", "len(train data)={} len(test_data)={} success_times={} / fail_times={}".format(n_train, n_test, n_success, n_fail)))

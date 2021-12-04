@@ -28,9 +28,9 @@ logging.basicConfig(
     filename=file_path,
     filemode='a+',
     format='[%(asctime)s] %(levelname)-8s %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S',
+    datefmt='%H:%M:%S',
 )
-
+logging.getLogger("tensorflow").setLevel(logging.ERROR)
 # -----------------------------------------------------------
 # Write a log
 # -----------------------------------------------------------
@@ -43,19 +43,23 @@ def writeLog(info):
     info : `dict[str, Any]`
         The return value of `formatLog()` or `formatException()`
     """
-    level = info['logLevel']
-    log = dumps(info['message'])
-    # write log
-    if level == logging.CRITICAL:
-        logging.critical(log)
-    elif level == logging.ERROR:
-        logging.error(log)
-    elif level == logging.WARNING:
-        logging.warning(log)
-    elif level == logging.INFO:
-        logging.info(log)
-    else:
-        logging.debug(log)
+    try:
+        log = dumps(info['message'])
+        level = info['logLevel']
+    except:
+        level = 50
+    finally:
+        # write log
+        if level == logging.CRITICAL:
+            logging.critical(log)
+        elif level == logging.ERROR:
+            logging.error(log)
+        elif level == logging.WARNING:
+            logging.warning(log)
+        elif level == logging.INFO:
+            logging.info(log)
+        else:
+            logging.debug(log)
     # ---------------------------------------------------------------------
     # way 2 :
     # # config
@@ -127,7 +131,7 @@ def formatException(e_msg, programInfo, action, message=None):
     e_msg : `int`
         Message of Exception (`e.args[0]`).
     programInfo : `str`
-        Traceback info (`traceback.extract_tb(tb)[-1]` (`cl, exc, tb = sys.exc_info())`).
+        Traceback info (`traceback.extract_tb(tb)[0]` (`cl, exc, tb = sys.exc_info())`).
     action : `str`
         Action performed
     message : `str`, optional
@@ -143,7 +147,7 @@ def formatException(e_msg, programInfo, action, message=None):
         programName = "line {}, in {}()".format(programInfo[1], programInfo[2])
 
     log_info = {
-        'logLevel': logging.CRITICAL,
+        'logLevel': logging.ERROR,
         'message': {
             'state': "Failure",
             'action': action,
@@ -153,7 +157,7 @@ def formatException(e_msg, programInfo, action, message=None):
         }
     }
     if message != None:
-        log_info['message']['message'] += message
+        log_info['message']['message'] += (" [ " + message + " ] ")
     return log_info
 
 
@@ -181,7 +185,7 @@ def help():
     
     formatException() args:
         e_msg         : string, Message of Exception (e.args[0])
-        programInfo   : dict,   Traceback info (traceback.extract_tb(tb)[-1] (cl, exc, tb = sys.exc_info()))
+        programInfo   : dict,   Traceback info (traceback.extract_tb(tb)[0] (cl, exc, tb = sys.exc_info()))
         action        : string, Action performed
         message = None: string, More message
     
@@ -198,21 +202,20 @@ def testFunc():
     """
     Test for each function.
     """
-    print("test formatLog().")
-    log_info = formatLog(10, "Hey-Fish-What-are-you-doing\FishLog.py", "line 142, in testFunc()", "Test formatLog()")
-    writeLog(log_info)
-    print("finish writeLog().")
-
-    print("test formatException().")
+    print("test formatException()....")
     try:
         raise ValueError('Test.')
     except Exception as e:
         cl, exc, tb = sys.exc_info()  # 取得Call Stack
-        lastCallStack = extract_tb(tb)[-1]  # 取得Call Stack的最後一筆資料
+        lastCallStack = extract_tb(tb)[0]  # 取得Call Stack的一筆資料
         log_info = formatException(e.args[0], lastCallStack, "Test formatException()")
-        writeLog(log_info)
     finally:
-        print("finish writeLog().")
+        writeLog(log_info)
+        print("finish writeLog()")
+        print("test formatLog()....")
+        log_info = formatLog(20, "Hey-Fish-What-are-you-doing\FishLog.py", "line 142, in testFunc()", "Test formatLog()")
+        writeLog(log_info)
+        print("finish writeLog()")
 
 
 if __name__ == '__main__':

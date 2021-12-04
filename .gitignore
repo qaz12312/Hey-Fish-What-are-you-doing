@@ -4,7 +4,7 @@ debug/
 RNN-HAR-2D-Pose-database/
 CSV/test/
 CSV/train/
-
+Docs/*.xlsx
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
