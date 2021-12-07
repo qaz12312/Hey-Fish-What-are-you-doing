@@ -1,10 +1,10 @@
 # !/usr/bin/python3.6
 """
-訓練模型並驗證.
+(測試用)訓練模型並驗證.
 """
-from dotenv import load_dotenv
-from os import getenv, environ
-environ['TF_CPP_MIN_LOG_LEVEL'] = '1'
+from os import makedirs, environ
+from os.path import isdir
+environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 import tensorflow as tf # Version 1.0.0 (some previous versions are used in past commits)
 import numpy as np
 import matplotlib.pyplot as plt
@@ -12,22 +12,25 @@ from sklearn import metrics
 import random
 from random import randint  # 證明此網路架構真的有運作: 用隨機類替換標記類以進行訓練
 import time
+import argparse
 import sys
 from traceback import extract_tb
 import FishLog
 import FishDebug
 
-load_dotenv()
+parser = argparse.ArgumentParser(description="Run LSTM training for fish.")
+parser.add_argument('--hidden', help='N_HIDDEN_CELLS',type=int, default=34)
+parser.add_argument('--steps', help='N_STEPS',type=int, default=30)
+args = parser.parse_args()
+run_time_start = time.time()
 # -----------------------------------------------------------
 # Preparing dataset
 # -----------------------------------------------------------
-DATASET_PATH = "convertTo_txt/"
+DATASET_PATH = "TESTING/convertTo_txt/"
 X_TRAIN_PATH = DATASET_PATH + "X_train.txt"
 X_VALIDATE_PATH = DATASET_PATH + "X_validate.txt"
 Y_TRAIN_PATH = DATASET_PATH + "Y_train.txt"
 Y_VALIDATE_PATH = DATASET_PATH + "Y_validate.txt"
-
-
 # -----------------------------------------------------------
 # Set some hyperparameters and parameters
 # -----------------------------------------------------------
@@ -41,7 +44,7 @@ N_CLASSES = len(LABEL_LIST)
 '''
 共有幾個分類.
 '''
-N_STEPS = int(getenv('N_STEPS'))
+N_STEPS = args.steps
 '''
 幾個frame是一個動作
 '''
@@ -49,7 +52,7 @@ N_INPUT = 26
 '''
 一個frame裡有幾個座標點(x+y)。n input/timestep(frame).
 '''
-N_HIDDEN_CELLS = 9
+N_HIDDEN_CELLS = args.hidden
 '''
 number of neurons in hidden layer(自己假設)
 '''
@@ -68,7 +71,7 @@ learning_rate = 0.0025
 '''
 INIT_LEARNING_RATE = 0.005
 '''
-初始學習率(若要進行指數衰減)
+若要進行指數衰減
 '''
 DECAY_RATE = 0.96
 '''
@@ -76,7 +79,7 @@ DECAY_RATE = 0.96
 '''
 N_DECAY_STEPS = 100000
 '''
-每 N_DECAY_STEPS 衰減一次(若要進行指數衰減). used in decay every N_DECAY_STEPS steps with a base of 0.96
+used in decay every N_DECAY_STEPS steps with a base of 0.96
 '''
 # loss
 LAMBDA_LOSS_AMOUNT = 0.0015
@@ -85,7 +88,7 @@ LAMBDA_LOSS_AMOUNT = 0.0015
 - 當 λ=0 時，則權重衰減不會發生；當 λ 越大時，懲罰的比率較高，權重衰減的程度也就跟著變大
 '''
 # train
-N_EPOCHS = 500
+N_EPOCHS = 2000
 '''
 迭代次數.
 - Loop n times on the dataset(在數據集上循環 n 次)
@@ -94,7 +97,7 @@ BATCH_SIZE = 1000
 '''
 批量大小。每次的迭代，送入類神經網路的資料數量.
 '''
-DISPLAY_ITERATION = BATCH_SIZE * 40
+DISPLAY_ITERATION = BATCH_SIZE * 3
 '''
 在訓練期間顯示測試集的準確性 To show validate set accuracy during training
 [注意]如果想每一回都展示，要去修改展示的code(因為最後一回可能會展示到2次)
@@ -122,9 +125,8 @@ def load_X(X_path):
             dtype=np.float32
         )
     if len(X_arr) < N_STEPS :
-        print('資料量太少 Failed')
+        print("資料量太少 Failed")
         raise ValueError('Failed: Not enough data')
-        
     blocks = int(len(X_arr) / N_STEPS)
     return np.array(np.split(X_arr, blocks))
 
@@ -170,7 +172,6 @@ def random_Y(Y_arr):
     for i in range(len(Y_arr)):
         Y_arr[i] = randint(0, N_CLASSES-1)
     return Y_arr
-
 
 # -----------------------------------------------------------
 # 運算流程 Utility functions for training
@@ -274,9 +275,8 @@ def one_hot(y_):
 
 
 try:
-    run_time_start = time.time()
     # -----------------------------------------------------------
-    # 訓練、測試資料
+    # 拿訓練、驗證資料
     # -----------------------------------------------------------
     X_train = load_X(X_TRAIN_PATH)
     X_validate = load_X(X_VALIDATE_PATH)
@@ -285,6 +285,7 @@ try:
     # -----------------------------------------------------------
     # Set Hyperparameters & Parameters
     # -----------------------------------------------------------
+    # Input Data
     n_training_data = len(X_train)
     '''
     共有幾筆動作.
@@ -330,7 +331,7 @@ try:
     # }
     weights = {
         'hidden': tf.Variable(tf.random.normal([N_INPUT, N_HIDDEN_CELLS]), name='weigh1'), # Hidden layer
-        'out': tf.Variable(tf.random.normal([N_HIDDEN_CELLS, N_CLASSES], mean=1.0, name='weight2'))
+        'out': tf.Variable(tf.random.normal([N_HIDDEN_CELLS, N_CLASSES], mean=1.0), name='weight2')
     }
     '''
     權重.
@@ -354,22 +355,24 @@ try:
     # l2 = LAMBDA_LOSS_AMOUNT * sum(tf.nn.l2_loss(tf_var) for tf_var in tf.trainable_variables())
     l2 = LAMBDA_LOSS_AMOUNT * sum(tf.nn.l2_loss(tf_var) for tf_var in tf.compat.v1.trainable_variables())
     '''
-    Loss function 的懲罰項- 對抗 Overfitting: Weight decay -- 不讓模型 fit 時過度依賴一些 weights
+    Loss function 的懲罰項
+    - 對抗 Overfitting: Weight decay -- 不讓模型 fit 時過度依賴一些 weights
     '''
     cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(labels=y, logits=pred)) + l2
     '''
-    Loss function.- `softmax_cross_entropy_with_logits`: 結合 Softmax & Cross Entropy 的函式
+    Loss function.
+    - `softmax_cross_entropy_with_logits`: 結合 Softmax & Cross Entropy 的函式
     '''
     if DECAYING_LEARNING_RATE:  # exponentially decayed learning rate
         learning_rate = tf.compat.v1.train.exponential_decay(INIT_LEARNING_RATE, global_step*BATCH_SIZE, N_DECAY_STEPS, DECAY_RATE, staircase=True)
         # learning_rate = tf.train.exponential_decay(INIT_LEARNING_RATE, global_step*BATCH_SIZE, N_DECAY_STEPS, DECAY_RATE, staircase=True)
         # decayed_learning_rate = INIT_LEARNING_RATE * DECAY_RATE ^ (global_step / N_DECAY_STEPS) 
-        # 總訓練步數 global_step*BATCH_SIZE
         # DECAY_RATE = 100: 每100步衰減一次(stair=True時)
     # optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost, global_step=global_step)  # Adam Optimizer
     optimizer = tf.compat.v1.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost, global_step=global_step)  # Adam Optimizer
     '''
-    優化器(optimizer)- Adam Optimizer: 會在訓練時動態更新 learning_rate
+    優化器(optimizer)
+    - Adam Optimizer: 會在訓練時動態更新 learning_rate
     '''
     # 定義計算準確度的運算
     correct_pred = tf.equal(tf.argmax(pred, 1), tf.argmax(y, 1))
@@ -465,8 +468,7 @@ try:
     f1_score = metrics.f1_score(Y_validate, predictions, average="weighted")
     # debug
     print_log_list.append("\nFinal result: Loss={:.3f}, Acc={:.3f}, Precision={:.3f}, Recall={:.3f}, F1_score={:.3f}\n".format(final_loss, final_accuracy, precision, recall, f1_score))
-    FishLog.writeLog(FishLog.formatLog(20, "training.py", "line 468", "Train & Run The Network.", "Train network time: {}".format(train_time)))
-
+    FishLog.writeLog(FishLog.formatLog(20, "TESTING_training.py", "line 471", "Train & Validate The Network.", "Train network time: {}".format(train_time)))
 
     # -----------------------------------------------------------
     # Visualization of results
@@ -495,7 +497,7 @@ try:
     plt.legend(loc='lower right', shadow=True)
     plt.xlabel('iteration')
     plt.ylabel('accuracy')
-    # Show 預測值 & 真實值
+    # Show 混淆矩陣
     fig.add_subplot(223)
     plt.imshow(normalised_confusion_matrix, interpolation='nearest', cmap=plt.cm.Blues)
     plt.title("Confusion matrix (normalised to %) of total validating data")
@@ -506,48 +508,61 @@ try:
     plt.tight_layout()
     plt.xlabel('Predicted label')
     plt.ylabel('True label')
-    plt.show()
-    # -----------------------------------------------------------
-    # Save model
-    # -----------------------------------------------------------
-    # 生成saver
-    saver = tf.train.Saver()
-    tf.add_to_collection('pred_network', pred)
-    # 训练完以后，使用saver.save 来保存
-    saver.save(sess, "LSTM_model/{}.ckpt".format(str(final_accuracy)[2:6]))
+    # plt.show()
+    if final_accuracy > 0.95:
+        plt.show()
+        # -----------------------------------------------------------
+        # Save model
+        # -----------------------------------------------------------
+        # 生成saver
+        saver = tf.train.Saver()
+        tf.add_to_collection('pred_network', pred)
+        # 训练完以后，使用saver.save 来保存
+        saver.save(sess, "LSTM_model/TESTING_{}.ckpt".format(str(final_accuracy)[2:6]))
+
     # 關閉 Session
     sess.close()
-
 except Exception as e:
+    print(e)
     cl, exc, tb = sys.exc_info()  # 取得Call Stack
-    FishLog.writeLog(FishLog.formatException(e.args[0], extract_tb(tb)[0], "Run LSTM code."))
+    FishLog.writeLog(FishLog.formatException(e.args[0], extract_tb(tb)[0], "Run LSTM training code.", "N_HIDDEN_CELLS={:<3d}, N_STEPS={:<2d}".format(N_HIDDEN_CELLS, N_STEPS)))
 else:
+    run_time = time.time() - run_time_start
     # log
-    FishLog.writeLog(FishLog.formatLog(20, "training.py", "line 526", "Run LSTM code.", "run total time:={}".format(time.time() - run_time_start)))
-    FishDebug.writeLog({"lineNum": 527, "funName": False, "fileName": "training.py"}, "v2_{}_hidden".format(N_HIDDEN_CELLS), {
-        "(X_train) training data count    / Shape of [X_train, Y_train]": "[{}, {}]".format(n_training_data, X_train.shape, Y_train.shape),
-        "(X_validate) validate data count / Shape of [X_validate, Y_validate]": "[{}, {}]".format(n_validating_data, X_validate.shape, Y_validate.shape),
-        "\nn_input": N_INPUT,
-        "N_HIDDEN_CELLS": N_HIDDEN_CELLS,
-        "\ndecaying_learning_rate": DECAYING_LEARNING_RATE,
-        "learning_rate": learning_rate,
-        "INIT_LEARNING_RATE": INIT_LEARNING_RATE,
-        "DECAY_RATE": DECAY_RATE,
-        "N_DECAY_STEPS": N_DECAY_STEPS,
-        "LAMBDA_LOSS_AMOUNT": LAMBDA_LOSS_AMOUNT,
-        "training_iterations": training_iterations,
-        "BATCH_SIZE": BATCH_SIZE,
+    FishLog.writeLog(FishLog.formatLog(20, "TESTING_training.py", "line 532", "Run LSTM training code.", "run total time:={} / N_HIDDEN_CELLS={:<3d}, N_STEPS={:<2d}".format(run_time, N_HIDDEN_CELLS, N_STEPS)))
+    # debug
+    if final_accuracy > 0.95: # Acc_STEPS_Hidden_trainingData_validateData.txt
+        FishDebug.writeLog({"lineNum": 522, "funName": False, "fileName": "TESTING_training.py"}, "log/{}_{}steps_{}hidden_{}_{}_{}".format(str(final_accuracy)[2:6], N_STEPS, N_HIDDEN_CELLS, n_training_data, n_validating_data), {
+            "(X_train) training data count    / Shape of [X_train, Y_train]": "[{}, {}]".format(n_training_data, X_train.shape, Y_train.shape),
+            "(X_validate) validate data count / Shape of [X_validate, Y_validate]": "[{}, {}]".format(n_validating_data, X_validate.shape, Y_validate.shape),
+            "\nn_input": N_INPUT,
+            "N_HIDDEN_CELLS": N_HIDDEN_CELLS,
+            "\ndecaying_learning_rate": DECAYING_LEARNING_RATE,
+            "learning_rate": learning_rate,
+            "INIT_LEARNING_RATE": INIT_LEARNING_RATE,
+            "DECAY_RATE": DECAY_RATE,
+            "N_DECAY_STEPS": N_DECAY_STEPS,
+            "LAMBDA_LOSS_AMOUNT": LAMBDA_LOSS_AMOUNT,
+            "training_iterations": training_iterations,
+            "BATCH_SIZE": BATCH_SIZE,
+            "\n---\nDisplay Train & Validation The Network": print_log_list,
 
-        "\n---\nDisplay Train & Run The Network": print_log_list,
-        "\n---\ntrain (loss, accuracy, iters_of_run['train']) len": (len(train_loss_list), len(train_accuracy_list), len(iters_of_run['train'])),
-        "validate  (loss, accuracy, iters_of_run['validate'] ) len": (len(validate_loss_list), len(validate_accuracy_list), len(iters_of_run['validate'])),
-        "\ntrain(20 actions)": {'losses':train_loss_list[::20], 'accuracies':train_accuracy_list[::20]},
-        "validate ": {'losses':validate_loss_list, 'accuracies':validate_accuracy_list},
-        
-        "ONLY VALUE": "\n\n[Confusion Matrix] validate set: {} actions".format(len(Y_validate)),
-        "Validating Accuracy": final_accuracy,
-        "Precision": precision,
-        "Recall": recall,
-        "f1_score": f1_score, 
-        "confusion_matrix": confusion_matrix,
-        "normalised_confusion_matrix": normalised_confusion_matrix, })
+            "\n---\ntrain    (loss, accuracy, iters_of_run['train'])    len": (len(train_loss_list), len(train_accuracy_list), len(iters_of_run['train'])),
+            "validate (loss, accuracy, iters_of_run['validate']) len": (len(validate_loss_list), len(validate_accuracy_list), len(iters_of_run['validate'])),
+            "\ntrain(20 actions)": {'losses':train_loss_list[::20], 'accuracies':train_accuracy_list[::20]},
+            "validate ": {'losses':validate_loss_list, 'accuracies':validate_accuracy_list},
+
+            "ONLY VALUE": "\n\n[Confusion Matrix] validate set: {} actions".format(len(Y_validate)),
+            "Validating Accuracy": final_accuracy,
+            "Precision": precision,
+            "Recall": recall,
+            "f1_score": f1_score, 
+            "confusion_matrix": confusion_matrix,
+            "normalised_confusion_matrix": normalised_confusion_matrix, })
+    # record
+    temp_dir = 'TESTING/records/'
+    if not isdir(temp_dir):
+        makedirs(temp_dir)
+
+    with open(temp_dir + "_result.txt", 'a') as f:
+        f.write("\t[{:<2d}] Loss={:.3f}, Acc={:.3f}, Precision={:.3f}, Recall={:.3f}, F1_score={:.3f} \n".format(N_HIDDEN_CELLS, final_loss, final_accuracy, precision, recall, f1_score))

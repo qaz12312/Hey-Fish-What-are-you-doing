@@ -1,6 +1,13 @@
 #!/bin/bash
 # 用來定義你要使用的 shell
 
+if [ ${#@} -ne 0 ] && [ "${@#"--help"}" = "" ]
+then
+    echo '...help...'
+    echo '檢查電腦規格 & 確認模組皆已安裝'
+    exit 0
+fi
+
 # cd pwd
 cd `dirname $0`
 
@@ -30,14 +37,14 @@ echo $version
 echo "**********************************************************"
 
 # Install python3.6
-echo -e "\e[1;43mInstall python3.6......\e[0m"
+echo -e "\033[30m\e[1;43mInstall python3.6......\e[0m"
 # sudo apt install python3 python3-libs -y
 # sudo apt install python3-setuptools -y
 # sudo apt install python3-pip -y
 echo "**********************************************************"
 
 # Install python3 Module
-echo -e "\e[1;43mInstall Python3 Module......\e[0m"
+echo -e "\033[30m\e[1;43mInstall Python3 Module......\e[0m"
 /usr/bin/python3.6 -m pip install -r requirements.txt
 
 # 確認版本是1.15.0
@@ -49,6 +56,5 @@ if [ "$tf_version" != "1.15.0" ]; then
 fi
 echo $tf_version
 echo "**********************************************************"
-
-echo -e "\e[1;42m All steps have been done. \e[0m"
+echo "$(tput setaf 0)$(tput setab 2) 已全部安裝完成 $(tput sgr 0)"
 exit 0

@@ -1,11 +1,11 @@
 """
-將 Deeplabcut 的 log 檔中的資料轉成 LSTM 所需格式.
+(測試環境用)將 Deeplabcut 的 csv 檔中的資料轉成 LSTM 所需格式.
 """
 from csv import reader
 import numpy as np
 import copy
-from os import getenv, listdir
-from os.path import isfile, join
+from os import getenv, listdir, makedirs
+from os.path import isfile, join, isdir
 from dotenv import load_dotenv
 import argparse
 import sys
@@ -14,24 +14,63 @@ import FishLog
 
 load_dotenv()
 parser = argparse.ArgumentParser(description="Run convert data to LSTM.")
-parser.add_argument('--type', help='convert_type',type=int, default=3)
+parser.add_argument('--steps', help='n_steps',type=int, default=30)
+parser.add_argument('--jumps', help='n_jumps',type=int, default=2)
+parser.add_argument('--normal', help='is_normal',type=int, default=0)
+parser.add_argument('--len', help='n_len',type=int, default=0)
+parser.add_argument('--translation', help='is_translation',type=int, default=0)
+parser.add_argument('--rotate', help='is_rotate',type=int, default=0)
+args = parser.parse_args()
 
 PROJECT_PATH = getenv('PROJECT_PATH')
-NOT_USED_LIST = [int(x) for x in getenv('NOT_USED').split(',')]  # 不使用的的座標點
-CHECK_FRONT_BACK = [int(x) for x in getenv('CHECK_FRONT_BACK').split(',')]  # frame 為正背面時, 不會有的座標點
-TOTAL_POINTS = int(getenv('TOTAL_POINTS')) - len(NOT_USED_LIST)  # 1 個 frame 有 n 個座標點
-# for lstm
-N_STEPS = int(getenv('N_STEPS'))  # n frame 為一個 action
-temp_jump = int(getenv('JUMP_N_FRAME'))  # 一秒取 n 個 frame
+NOT_USED_LIST = [int(x) for x in getenv('NOT_USED').split(',')]
+'''
+不使用的的座標點
+'''
+CHECK_FRONT_BACK = [int(x) for x in getenv('CHECK_FRONT_BACK').split(',')]
+'''
+frame 為正背面時, 不會有的座標點
+'''
+TOTAL_POINTS = int(getenv('TOTAL_POINTS')) - len(NOT_USED_LIST)
+'''
+1 個 frame 有 n 個座標點
+'''
+N_STEPS = args.steps
+'''
+n frame 為一個 action
+'''
+temp_jump = args.jumps
 if temp_jump < 1:
     temp_jump = 1
 JUMP_N_FRAME = temp_jump
+'''
+一秒取 30/n 個 frame
+'''
 # for 正規化
-SCALE_LEN = int(getenv('SCALE_LEN'))  # scale, MIRROR_POINT 到 TRANSLATION_POINT 的長度 (0:不縮放)
-IS_TRANSLATION = int(getenv('IS_TRANSLATION')) # 是否要做平移 (type:0/1)
-TRANSLATION_POINT = int(getenv('TRANSLATION_POINT'))  # translation, 以第 n 個座標點為基準點(0,0)
-IS_ROTATE_MIRROR = bool(getenv('IS_ROTATE_MIRROR'))  # 正規化資料時, 是否檢查旋轉(否則就檢查鏡像)
-MIRROR_POINT = int(getenv('MIRROR_POINT'))  # mirror, 以第 n 個座標點是否為負來判斷是否鏡像(旋轉)
+IS_NORMAL = args.normal
+# scale
+SCALE_LEN = args.len
+'''
+MIRROR_POINT 到 TRANSLATION_POINT 的長度 = n (0:不縮放)
+'''
+# translation
+IS_TRANSLATION = args.translation
+'''
+是否要做平移 (type:0/1)
+'''
+TRANSLATION_POINT = int(getenv('TRANSLATION_POINT'))
+'''
+以第 n 個座標點為基準點(0,0)
+'''
+# mirror
+IS_ROTATE = args.rotate
+'''
+正規化資料時, 是否檢查旋轉(2:就檢查鏡像) (type: 0/1/2)
+'''
+MIRROR_POINT = int(getenv('MIRROR_POINT'))
+'''
+以第 n 個座標點是否為負來判斷是否鏡像(旋轉) (type: 0/1)
+'''
 # for current file
 _current_file_path = ''
 '''
@@ -63,7 +102,7 @@ def getCoords(filePath):
             line += 1
             if line < 4:  # 略過前3行
                 continue
-            # 第一個(coords))不需要
+            # 第一個(coords)不需要
             temp_arr = np.array(frame_coords[1:], dtype=object)
 
             # 若有座標點 = '', 將 '' 轉成 None
@@ -74,7 +113,7 @@ def getCoords(filePath):
             # 轉成 float64 ndarray
             temp_arr = temp_arr.astype(np.float64)
 
-            # 移除 x,y 的後面一個(likelihood)
+            # 移除x,y的後面一個(likelihood)
             data_x.append([
                 np.delete(temp_arr[::3], NOT_USED_LIST),   # x 座標
                 np.delete(temp_arr[1::3], NOT_USED_LIST),  # y 座標
@@ -127,7 +166,7 @@ def writeData(dirPath, fileName, data_arr, n_actions, label=0):
             f.write("{}\n".format(",".join(x for x in ["%s" % num for num in frame_arr])))
     if label > 0:
         with open(dirPath+'/Y_'+fileName+'.txt', 'a') as f:
-            f.write("{}\n".format(label)*n_actions)
+            f.write("{}\n".format(label) * n_actions)
     return True
 
 
@@ -182,7 +221,7 @@ def convertToUseful(data_arr):
 
     if bool(interpolation_dict):  # if interpolation_dict is not empty
         print("需要進行填補的座標點 : \n{}".format(interpolation_dict))
-        FishLog.writeLog(FishLog.formatLog(30, "convertData.py", "line 186", "List the empty croods.", "[{}] empty croods: {}".format(_current_file_path, interpolation_dict)))
+        FishLog.writeLog(FishLog.formatLog(30, "TESTING_convertData.py", "line 224", "List the empty croods.", "[{}] empty croods: {}".format(_current_file_path, interpolation_dict)))
         data_arr = _fillInCoords(data_arr, interpolation_dict)
 
     return _frameSplit(data_arr, cut_list)
@@ -273,7 +312,10 @@ def _frameSplit(data_arr, cut_list):
         frame_in_action_range = range(start_frame_idx, start_frame_idx+((N_STEPS-1)*JUMP_N_FRAME+1), JUMP_N_FRAME)
         if set(frame_in_action_range) & cut_set:  # 若 action 裡有 frame 是分段點
             continue
-        normalized_data = normalization(copy.deepcopy(np.array(data_arr[frame_in_action_range])))
+        if IS_NORMAL:
+            normalized_data = normalization(copy.deepcopy(np.array(data_arr[frame_in_action_range])))
+        else:
+            normalized_data = copy.deepcopy(np.array(data_arr[frame_in_action_range]))
         for frame_idx in range(N_STEPS):
             result_list.append(normalized_data[frame_idx])
         total_actions += 1
@@ -319,7 +361,7 @@ def normalization(data_arr):
                     data_arr[idx] = np.dot(scale_arr, data_arr[idx])
         else:
             raise ValueError('Failed: Not enough data')  # 照理來說不可能
-
+    
     if IS_TRANSLATION:
         # 用 frame1 計算偏移矩陣
         [offset_x, offset_y] = 0-frame1[0][TRANSLATION_POINT], 0-frame1[1][TRANSLATION_POINT]
@@ -327,7 +369,7 @@ def normalization(data_arr):
             offset_arr = np.array([[1, 0, offset_x], [0, 1, offset_y], [0, 0, 1]])
             transformation_arr = np.dot(offset_arr, transformation_arr)
 
-    if IS_ROTATE_MIRROR == 1:
+    if IS_ROTATE == 1:
         # 用 frame1 算出是否需旋轉
         [v2_x, v2_y] = frame1[0][MIRROR_POINT]-frame1[0][TRANSLATION_POINT], frame1[1][MIRROR_POINT]-frame1[1][TRANSLATION_POINT]
         if (not(v2_x > 0 and v2_y == 0)):  # 若 tail 不在 head 的正右邊
@@ -339,7 +381,7 @@ def normalization(data_arr):
 
             rotate_arr = np.array([[cos_theta, -sin_rho, 0], [sin_rho, cos_theta, 0], [0, 0, 1]])
             transformation_arr = np.dot(rotate_arr, transformation_arr)
-    elif IS_ROTATE_MIRROR == 2:
+    elif IS_ROTATE == 2:
         # 用 frame1 算出是否需水平鏡像
         if frame1[0][MIRROR_POINT] - frame1[0][TRANSLATION_POINT] < 0:  # 若 tail_x 在 head_x 的左邊
             mirror_arr = np.array([[-1, 0, 0], [0, 1, 0], [0, 0, 1]])
@@ -368,7 +410,7 @@ def _getENV():
         'check_front_back': CHECK_FRONT_BACK,
         'translation_point': TRANSLATION_POINT,
         'mirror_point': MIRROR_POINT,
-        'IS_ROTATE_MIRROR': IS_ROTATE_MIRROR,
+        'is_rotate': IS_ROTATE,
         'scale_len': SCALE_LEN,
         'jump_n_frame':JUMP_N_FRAME,    
     }
@@ -377,41 +419,19 @@ def _getENV():
 # -----------------------------------------------------------
 # The files converts to LSTM format.
 # -----------------------------------------------------------
-def convert(convert_type):
-    '''
-    The files converts to LSTM format.
-
-    Parameters
-    ----------
-    convert_type : `int`
-        1: 轉換 test data / 2: 轉換 train & validate data / 3: 轉換全部
-
-    Returns
-    -------
-    `list` 2個元素
-        [{訓練測資數量, 驗證測資數量,測試測資數量}, {成功轉換次數,失敗轉換次數}]
-    '''
+try:
     result = {'successful_times' : 0, 'failed_times' : 0}
     failed_path_list = []
-    if convert_type==1:
-        total_actions = {'test' : 0}
-    elif convert_type==2:
-        total_actions = {'train' : 0, 'validate' : 0}
-    elif convert_type==3:
-        total_actions = {'train' : 0, 'validate' : 0, 'test' : 0}
-    else:
-        print("參數值無效 Failed")
-        raise ValueError('Failed: Incorrect input')
+    total_actions = {'train' : 0, 'validate' : 0, 'test' : 0}
     dirs = total_actions.keys()
     for dir in dirs:
-        csv_path = PROJECT_PATH + '/CSV/' + dir
+        csv_path = PROJECT_PATH + '/TESTING/CSV/' + dir
         f_list = listdir(csv_path)
         if len(f_list) == 0:
             print("[警告] {} 沒有任何檔案".format(csv_path))
             continue
         else:
             csv_file_list = [f for f in f_list if isfile(join(csv_path, f))]
-        
         for file_name in csv_file_list:
             _current_file_path = csv_path + '/' + file_name
             print("開始對 {} 進行轉換.....".format(file_name))
@@ -437,30 +457,41 @@ def convert(convert_type):
                         label=3
                     else:
                         label=4
-                if writeData(PROJECT_PATH + '/convertTo_txt', dir, X_usable_data, n_actions, label):
+                if writeData(PROJECT_PATH + '/TESTING/convertTo_txt', dir, X_usable_data, n_actions, label):
                     result['successful_times'] += 1
                     print("Success！")
                 else:
                     print("Failure！")
-    
+
     if result['failed_times'] > 0:
         print("{} 個檔案轉換成功 / {} 個檔案轉換失敗 : 失敗檔案如下".format(result['successful_times'], result['failed_times']))
         for path in failed_path_list:
             print("\t{}".format(path))
-        FishLog.writeLog(FishLog.formatLog(30, "convertData.py", "line 450", "Fail convert data.", "failed files: {}".format(failed_path_list)))
+        FishLog.writeLog(FishLog.formatLog(30, "TESTING_convertData.py", "line 470", "List the fail files.", "failed files: {}".format(failed_path_list)))
     else:
-        print("全部檔案皆轉換成功，請至 [ {}/convertTo_txt/ ] 查看相關產出檔案".format(PROJECT_PATH))
-    
-    return total_actions, result
+        print("全部檔案皆轉換成功，請至 [ {}/TESTING/convertTo_txt/ ] 查看相關產出檔案".format(PROJECT_PATH))
+    # -----------------------------------------------------------
+    # 紀錄測試參數值
+    # -----------------------------------------------------------
+    record_dir = 'TESTING/records/'
+    record_file_name = ''
+    if not isdir(record_dir):
+        makedirs(record_dir)
 
+    with open(record_dir + '_result.txt', 'a') as f:
+        f.write("[n_steps={:<2d} JUMP_N_FRAME={:<2d} is_normal={:<1d} scale_len={:<1d} is_translation={:<1d} is_rotate={:<1d}] data count={}\n".format(N_STEPS, JUMP_N_FRAME, IS_NORMAL, SCALE_LEN, IS_TRANSLATION, IS_ROTATE, total_actions))
 
-if __name__ == '__main__':
-    try:
-        args = parser.parse_args()
-        total_actions, result = convert(args.type)
-    except Exception as e:
-        cl, exc, tb = sys.exc_info()  # 取得Call Stack
-        FishLog.writeLog(FishLog.formatException(e.args[0], extract_tb(tb)[0], "Convert data."))
+    return_code = 0
+    if total_actions['train']<1000 or total_actions['validate']<1:
+        return_code = -1
     else:
-        # log
-        FishLog.writeLog(FishLog.formatLog(20, "convertData.py", "line 466", "Convert data.", "data count={} / result={}".format(total_actions, result)))
+        with open(record_dir + '_array.txt', 'a') as f:
+            f.write("[n_steps={:<2d} JUMP_N_FRAME={:<2d} is_normal={:<1d} scale_len={:<1d} is_translation={:<1d} is_rotate={:<1d}]\n".format(N_STEPS, JUMP_N_FRAME, IS_NORMAL, SCALE_LEN, IS_TRANSLATION, IS_ROTATE))
+except Exception as e:
+    return_code = -1
+    cl, exc, tb = sys.exc_info()  # 取得Call Stack
+    FishLog.writeLog(FishLog.formatException(e.args[0], extract_tb(tb)[0], "Convert data.", "current file={}".format(_current_file_path)))
+else:
+    # log
+    FishLog.writeLog(FishLog.formatLog(20, "TESTING_convertData.py", "line 496", "Convert data.", "[data count={} result={}] [n_steps={:<2d} JUMP_N_FRAME={:<2d} is_normal={:<1d} scale_len={:<1d} is_rotate={:<1d}]".format(total_actions, result, N_STEPS, JUMP_N_FRAME, IS_NORMAL, SCALE_LEN, IS_ROTATE)))
+    sys.exit(return_code)

@@ -11,21 +11,18 @@ from sklearn import metrics
 import random
 from random import randint  # 證明此網路架構真的有運作: 用隨機類替換標記類以進行訓練
 import time
-import FishLog
 import FishDebug
 
 load_dotenv()
 
-run_time_start = time.time()
-FishLog.writeLog(FishLog.formatLog(20, "training.py", "line 20", "Start running the file.", "tensorflow version={}".format(tf.version.VERSION)))
 # -----------------------------------------------------------
 # Preparing dataset
 # -----------------------------------------------------------
 LABELS = [
-    "normal",  # 原本 "JUMPING",
-    "hunger",  # 原本 "JUMPING_JACKS",
-    "rest",  # 原本 "BOXING",
-    "exception",  # "WAVING_2HANDS",
+    "JUMPING",
+    "JUMPING_JACKS",
+    "BOXING",
+    "WAVING_2HANDS",
     "WAVING_1HAND",
     "CLAPPING_HANDS"
 ]
@@ -147,13 +144,13 @@ decaying_learning_rate = True
 
 decayed_learning_rate = init_learning_rate * decay_rate ^ (global_step / decay_steps)
 '''
-learning_rate = 0.0025
+learning_rate = 0.002
 '''
 學習速率。更新參數的步幅.
 - 固定的學習率總是顯得笨拙：太小速度太慢，太大又擔心得不到最優解。一個很直接的想法就是隨著訓練的進行，動態設定學習率——隨著訓練次數增加，學習率逐步減小
 - used if `decaying_learning_rate` = False
 '''
-init_learning_rate = 0.005
+init_learning_rate = 0.004
 '''
 若要進行指數衰減
 '''
@@ -178,7 +175,7 @@ lambda_loss_amount = 0.0015
 - 當 λ=0 時，則權重衰減不會發生；當 λ 越大時，懲罰的比率較高，權重衰減的程度也就跟著變大
 '''
 # train
-epochs = 500
+epochs = 50000
 '''
 迭代次數.
 - Loop n times on the dataset(在數據集上循環 n 次)
@@ -187,11 +184,11 @@ training_iterations = training_data_count * epochs
 '''
 訓練次數.train step 上限
 '''
-batch_size = n_steps*128 # 4096
+batch_size = 2000
 '''
 批量大小。每次的迭代，送入類神經網路的資料數量.
 '''
-display_iteration = batch_size*40
+display_iteration = batch_size*10
 '''
 在訓練期間顯示測試集的準確性 To show test set accuracy during training
 '''
@@ -414,8 +411,8 @@ while step * batch_size <= training_iterations:
         test_loss, test_acc = sess.run([cost, accuracy], feed_dict={x: X_test, y: one_hot_Y_test})
         test_loss_list.append(test_loss)
         test_accuracy_list.append(test_acc)
-        current_info_str = "Iter #{:<8d}/ Global_iter #{:<5d}: Learning rate={:.6f} Batch Loss={:.3f}, Acc={:.3f} [test data]=> Loss= {:.3f}, Acc= {:.3f}".format(current_iteration, sess.run(global_step), sess.run(learning_rate), train_loss, train_acc, test_loss, test_acc)
-        print("\n"+current_info_str)
+        current_info_str = "Iter #{:<8d}/ Global_iter #{:<5d}: Learning rate={:.6f} Batch Loss={:.3f}, Acc={:.3f} [validating data]=> Loss= {:.3f}, Acc= {:.3f}".format(current_iteration, sess.run(global_step), sess.run(learning_rate), train_loss, train_acc, test_loss, test_acc)
+        print(current_info_str)
         print_log_list.append(current_info_str)
 
     step += 1
@@ -429,7 +426,6 @@ test_accuracy_list.append(final_accuracy)
 
 # debug by Polly in 2021/11/3
 print_log_list.append("\nTrain network time: {}\nFinal result: Loss= {:.3f}, Acc= {:.3f}\n".format(time.time() - time_start, final_loss, final_accuracy))
-FishLog.writeLog(FishLog.formatLog(20, "training.py", "line 432", "Train & Run The Network.", "Train network time: {}".format(time.time() - time_start)))
 
 
 # -----------------------------------------------------------
@@ -486,8 +482,7 @@ plt.show()
 # 關閉 Session
 sess.close()
 
-FishLog.writeLog(FishLog.formatLog(20, "training.py", "line 489", "Finish running the file.", "Total time: {}".format(time.time() - run_time_start)))
-FishDebug.writeLog({"lineNum": 490, "funName": False, "fileName": "training.py"}, "training/v0Open/{}_hidden".format(n_hidden), {
+FishDebug.writeLog({"lineNum": 485, "funName": False, "fileName": "training_openpose.py"}, "Open_{}_hidden".format(n_hidden), {
     "X_train shape": X_train.shape,
     "Y_train shape": Y_train.shape,
     "(X_train) training data count": training_data_count,

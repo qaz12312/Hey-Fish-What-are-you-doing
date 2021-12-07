@@ -1,10 +1,8 @@
 log/
-lstm_log/
-debug/
 RNN-HAR-2D-Pose-database/
-CSV/test/
-CSV/train/
-
+CSV/*
+TESTING/CSV/*
+Docs/*.xlsx
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
