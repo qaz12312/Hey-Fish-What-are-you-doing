@@ -141,9 +141,9 @@ fi
 
 echo -e "\n**********************************************************"
 
-N_STEPS=(20)
-N_JUMP=(15)
-N_LEN=(1)
+N_STEPS=(15 20 25 30 35)
+N_JUMP=(2 5 10 15 25)
+N_LEN=(0 1 2 3 4 5)
 
 read -p '執行幾種 hidden cell (從 1層 開始) ? ' hidden_types
 while ! [[ "$hidden_types" =~ ^[1-9][0-9]*$ ]]
@@ -158,15 +158,15 @@ for n_step in "${N_STEPS[@]}"
 do
     for n_jump in "${N_JUMP[@]}"
     do
-        # run_codes $hidden_types $n_step $n_jump 0
+        run_codes $hidden_types $n_step $n_jump 0
         for n_len in "${N_LEN[@]}"
         do
-            # if [ "$n_len" != 0 ]
-            # then
-            #     run_codes $hidden_types $n_step $n_jump 1 $n_len 0 0
-            # fi
-            # run_codes $hidden_types $n_step $n_jump 1 $n_len 0 1
-            # run_codes $hidden_types $n_step $n_jump 1 $n_len 0 2
+            if [ "$n_len" != 0 ]
+            then
+                run_codes $hidden_types $n_step $n_jump 1 $n_len 0 0
+            fi
+            run_codes $hidden_types $n_step $n_jump 1 $n_len 0 1
+            run_codes $hidden_types $n_step $n_jump 1 $n_len 0 2
             run_codes $hidden_types $n_step $n_jump 1 $n_len 1 0
             run_codes $hidden_types $n_step $n_jump 1 $n_len 1 1
             run_codes $hidden_types $n_step $n_jump 1 $n_len 1 2

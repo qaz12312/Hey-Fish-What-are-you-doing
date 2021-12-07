@@ -69,7 +69,6 @@ def result_txt_to_excel(filename, execl_name):
     print("excel location: " + excel_path)
 
 
-
 def row_to_excel(data_list, execl_name):
     '''
     Parameters
