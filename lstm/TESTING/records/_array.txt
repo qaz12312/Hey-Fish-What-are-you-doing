@@ -1,0 +1,4 @@
+[n_steps=5  JUMP_N_FRAME=3  is_normal=0 scale_len=0 is_translation=0 is_rotate=0]
+[n_steps=5  JUMP_N_FRAME=5  is_normal=0 scale_len=0 is_translation=0 is_rotate=0]
+[n_steps=5  JUMP_N_FRAME=8  is_normal=0 scale_len=0 is_translation=0 is_rotate=0]
+[n_steps=5  JUMP_N_FRAME=10 is_normal=0 scale_len=0 is_translation=0 is_rotate=0]

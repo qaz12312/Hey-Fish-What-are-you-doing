@@ -1,0 +1,2 @@
+model_checkpoint_path: "TESTING_9594.ckpt"
+all_model_checkpoint_paths: "TESTING_9594.ckpt"
